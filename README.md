@@ -45,18 +45,20 @@ Any Libraries you add or remove from the project must be reflected in the `requi
 
 To **install** a library use:
 ```bash
-pip install library_to_install && pip freeze > requirements.txt
+pip install library_to_install && rm requirements.txt && pip freeze > requirements.txt
 ```
 
 To **remove** a library use:
 ```bash
-pip uninstall library_to_install && pip freeze > requirements.txt
+pip uninstall library_to_install && rn requirements.txt && pip freeze > requirements.txt
 ```
 
 To update the `requirements.txt` at any time use:
 ```bash
-pip freeze > requirements.txt
+rm requirements.txt && python -m pip freeze > requirements.txt
 ```
+
+Or the equivalent functionality of above commands according to your shell/environment
 
 >[!WARNING]
 > Not updating your `requirements.txt` will abort the commit:
