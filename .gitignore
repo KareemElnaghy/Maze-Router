@@ -1,6 +1,10 @@
+# Python
+venv/
 
 # Text editors
 .zed/
 .vscode/
 .idea/
+
+# OSX stuff
 .DS_Store/
