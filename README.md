@@ -2,9 +2,8 @@
 
 ## Setting up dev environment
 
-### Python Virtual Environment
 
-#### Making the pre-commit hook executable
+### Making the pre-commit hook executable
 
 Make sure the pre-commit hook is executable by the system
 [Check why a pre-commit hook is needed](#pre-commit)
@@ -12,8 +11,9 @@ Make sure the pre-commit hook is executable by the system
 ```bash
 chmod +x ./.git/hooks/pre-commit
 ```
-
 > or the equivalent to your system
+
+### Python Virtual Environment
 
 #### Set up a virtual environemnt for Python at the root of the project
 ```bash
