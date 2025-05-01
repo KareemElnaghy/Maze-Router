@@ -4,6 +4,17 @@
 
 ### Python Virtual Environment
 
+#### Making the pre-commit hook executable
+
+Make sure the pre-commit hook is executable by the system
+[Check why a pre-commit hook is needed](#pre-commit)
+
+```bash
+chmod +x ./.git/hooks/pre-commit
+```
+
+> or the equivalent to your system
+
 #### Set up a virtual environemnt for Python at the root of the project
 ```bash
 python -m venv ./venv
@@ -39,7 +50,7 @@ pip install -r requirements.txt
 ```
 
 ---
-## Installing/Removing libraries **(Important)**
+## Installing or Removing Libraries **(Important)**
 
 Any Libraries you add or remove from the project must be reflected in the `requirements.txt` to avoid errors so we standardize installation of libraries to automatically reflect in `requirements.txt`
 
@@ -59,6 +70,9 @@ rm requirements.txt && python -m pip freeze > requirements.txt
 ```
 
 Or the equivalent functionality of above commands according to your shell/environment
+
+<a name="pre-commit">
+</a>
 
 >[!WARNING]
 > Not updating your `requirements.txt` will abort the commit:
