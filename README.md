@@ -49,6 +49,15 @@ At the project root install project requirements:
 pip install -r requirements.txt
 ```
 
+### Visualizer Setup
+Currently `vispy` does not query on correct OpenGL version when wayland, nvidia and certain Qt versions are invovled
+see [issue 2640 on vispy](https://github.com/vispy/vispy/issues/2640)
+
+**if** you encounter any problems run the visualizer on an xorg session, **or** set the following environment variable:
+```bash
+export QT_QPA_PLATFORM=xcb
+```
+
 ---
 ## Installing or Removing Libraries **(Important)**
 
