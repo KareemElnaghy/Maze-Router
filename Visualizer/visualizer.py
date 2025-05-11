@@ -89,7 +89,7 @@ class CanvasWrapper:
         scene_coords = self.view_top.scene.transform.imap(event.pos)
         x, y = scene_coords[:2]
 
-        # check if the coordinates are within the image bounds
+        # convert scenecoords to grid coords
         grid_x = int(y)
         grid_y = int(x)
         label.setText(f"Grid X: {grid_x}, Grid Y: {grid_y}")
