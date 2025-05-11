@@ -35,6 +35,9 @@ class MyMainWindow(QtWidgets.QMainWindow):
 
     def _connect_controls(self):
         self._controls.colormap_chooser.currentTextChanged.connect(self._canvas_wrapper.set_image_colormap)
+        self._canvas_wrapper.canvas.events.mouse_move.connect(
+            lambda event: self._canvas_wrapper.on_mouse_move(event, self._controls.coord_label)
+        )
 
 
 class Controls(QtWidgets.QWidget):
@@ -52,6 +55,9 @@ class Controls(QtWidgets.QWidget):
         self.layer_chooser = QtWidgets.QComboBox()
         self.layer_chooser.addItems(LAYER_CHOICES)
         layout.addWidget(self.layer_chooser)
+
+        self.coord_label = QtWidgets.QLabel()
+        layout.addWidget(self.coord_label)
 
         layout.addStretch(1)
         self.setLayout(layout)
@@ -77,6 +83,12 @@ class CanvasWrapper:
         print(f"Changing image colormap to {cmap_name}")
         self.image.cmap = cmap_name
 
+    def on_mouse_move(self, event, label):
+        tr = self.canvas.scene.node_transform(self.view_top)
+        pos = tr.map(event.pos)
+        x, y = pos[:2]
+        label.setText(f"X: {x:.2f}, Y: {y:.2f}")
+
 def _get_lee_router_path():
     grid = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -98,6 +110,18 @@ def _get_lee_router_path():
 
     IMAGE_SHAPE = gridnp.shape
     return gridnp
+
+def _get_lee_router_path_st():
+    grid = [[0]*1000]*1000
+    pins = [(1,1), (999,100), (999,999), (500,0), (500,999)]
+    path = np.array(lee_router(grid, pins), np.float32)
+    gridnp = np.array(grid, np.float32)
+    for y, x in path.astype(int):
+        gridnp[y, x] = 255
+
+    IMAGE_SHAPE = gridnp.shape
+    return gridnp
+
 
 def _generate_random_image_data(shape, dtype=np.float32):
     rng = np.random.default_rng()
