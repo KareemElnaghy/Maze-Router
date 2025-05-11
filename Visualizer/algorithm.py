@@ -2,13 +2,28 @@ import numpy as np
 from collections import deque
 
 def lee_router(grid, pins):
-    if len(pins) <= 1: # base case if we only have one pin or no pins
+    """
+    grid: 2D list or np.array, obstacles are -1, empty is 0
+    pins: list of (row, col) tuples, first is the source, rest are targets
+    Returns: list of (row, col) tuples forming a path passing through all pins in order after propagating and backtracking
+    """
+
+    if len(pins) <= 1:  # base case: no pins to route
         return []
 
-    rows, cols = len(grid), len(grid[0])
-    routing_tree = {pins[0]}
+
+    # initialization
+    grid = np.array(grid)
+    rows, cols = grid.shape
+    routing_tree = set([pins[0]])
     all_paths = []
     unrouted_pins = set(pins[1:])
+
+    # validate pins
+    for pin in pins:
+        r, c = pin
+        if not (0 <= r < rows and 0 <= c < cols) or grid[r, c] == -1:
+            print(f"Pin {pin} is on an obstacle or outside the grid.")
 
     while unrouted_pins:
         closest_pin = None
@@ -16,88 +31,63 @@ def lee_router(grid, pins):
         best_path = None
 
         for target in unrouted_pins:
+            # distance grid: -2 = unvisited, -1 = obs, >=0 = dist
             distance = np.full((rows, cols), -2, dtype=int)
-
             for r in range(rows):
                 for c in range(cols):
-                    if grid[r][c] != 0 and (r, c) not in pins:
+                    if grid[r, c] == -1 and (r, c) not in pins:
                         distance[r, c] = -1
 
+            # perform bfs from all the cells in the routing tree
             queue = deque()
             for cell in routing_tree:
                 distance[cell] = 0
                 queue.append(cell)
 
             directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-            target_found = False
+            found = False
 
-            while queue and not target_found:
+            while queue and not found:
                 current = queue.popleft()
                 r, c = current
-
-                for dr, dc in directions:
-                    nr, nc = r + dr, c + dc
-
-                    if (0 <= nr < rows and 0 <= nc < cols and
-                            distance[nr, nc] == -2):
-
+                for dRow, dCol in directions:
+                    nr, nc = r + dRow, c + dCol
+                    if (0 <= nr < rows and 0 <= nc < cols and distance[nr, nc] == -2):
                         distance[nr, nc] = distance[r, c] + 1
                         queue.append((nr, nc))
-
                         if (nr, nc) == target:
-                            target_found = True
+                            found = True
                             break
 
-            if target_found and distance[target] < min_distance:
+            if found and distance[target] < min_distance:
                 min_distance = distance[target]
                 closest_pin = target
+                # backtrack 
                 path = [target]
                 current = target
-
                 while distance[current] != 0:
                     r, c = current
-                    for dr, dc in directions:
-                        nr, nc = r + dr, c + dc
-
+                    for dRow, dCol in directions:
+                        nr, nc = r + dRow, c + dCol
                         if (0 <= nr < rows and 0 <= nc < cols and
-                                distance[nr, nc] == distance[r, c] - 1):
+                            distance[nr, nc] == distance[r, c] - 1):
                             path.append((nr, nc))
                             current = (nr, nc)
                             break
-
                 path.reverse()
                 best_path = path
 
         if closest_pin is None:
-            return list(routing_tree) if routing_tree else []
+            # no path found to any remaining pin
+            return []
 
+        # add the best path and update the routing tree
         all_paths.extend(best_path)
-
         for cell in best_path:
             routing_tree.add(cell)
-
         for r, c in best_path:
             if (r, c) not in pins:
-                grid[r][c] = 1
-
+                grid[r, c] = 1  # Mark as routed
         unrouted_pins.remove(closest_pin)
 
     return all_paths
-
-def main():
-    grid = [
-        [0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0],
-    ]
-
-    pins = [(1, 1), (2, 4), (5, 2)]
-
-    routing_tree = lee_router(grid, pins)
-    print("Routing tree:", routing_tree)
-
-if __name__ == "__main__":
-    main()
