@@ -71,6 +71,7 @@ class CanvasWrapper:
         self.view_top = self.grid.add_view(0, 0, bgcolor='gray')
         #image_data = _generate_grid(IMAGE_SHAPE)
         image_data = _get_lee_router_path()
+        IMAGE_SHAPE = image_data.shape
         self.image = visuals.Image(
             image_data,
             texture_format="auto",
@@ -85,10 +86,14 @@ class CanvasWrapper:
         self.image.cmap = cmap_name
 
     def on_mouse_move(self, event, label):
-        tr = self.canvas.scene.node_transform(self.view_top)
-        pos = tr.map(event.pos)
-        x, y = pos[:2]
-        label.setText(f"X: {x:.2f}, Y: {y:.2f}")
+        scene_coords = self.view_top.scene.transform.imap(event.pos)
+        x, y = scene_coords[:2]
+
+        # check if the coordinates are within the image bounds
+        grid_x = int(y)
+        grid_y = int(x)
+        label.setText(f"Grid X: {grid_x}, Grid Y: {grid_y}")
+
 
 def _get_lee_router_path():
     # ======= TEST 1 =======
@@ -137,7 +142,7 @@ def _get_lee_router_path():
         [0, -1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     ]
-    
+
     pins = [(2, 1), (6, 2), (12, 2), (6, 10), (2, 14), (12, 12)]
 
     # # ======= TEST 4 =======
@@ -167,16 +172,15 @@ def _get_lee_router_path():
     #     if grid[r, c] == 0:
     #         pins.append((r, c))
 
-    
+
     path = np.array(lee_router(grid, pins), np.float32)
     print(path)
     gridnp = np.array(grid, np.float32)
 
     gridnp[gridnp == -1] = 128 # Obstacles
-    for y, x in path.astype(int):
-        gridnp[y, x] = 255
+    for x, y in path.astype(int):
+        gridnp[x, y] = 255
 
-    IMAGE_SHAPE = gridnp.shape
     return gridnp
 
 def _get_lee_router_path_st():
