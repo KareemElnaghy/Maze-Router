@@ -1,6 +1,28 @@
 import numpy as np
 from collections import deque
 
+def get_source_pin(pins, rows, cols):
+    """
+    Function that retrives the source pin from the list of pins
+    by selecting the pin closest to the corner of the grid.
+    """
+
+    corners = [(0, 0), (0, cols - 1), (rows - 1, 0), (rows - 1, cols - 1)]
+
+    closest_pin = pins[0]
+    min_distance = float('inf')
+
+    # loop over each pin and keep track of min distance between pin and corner
+    for pin in pins:
+        for corner in corners:
+            distance = abs(pin[0] - corner[0]) + abs(pin[1] - corner[1])
+            if distance < min_distance:
+                min_distance = distance
+                closest_pin = pin
+
+    return closest_pin
+    
+
 def lee_router(grid, pins):
     """
     grid: 2D list or np.array, obstacles are -1, empty is 0
@@ -15,7 +37,8 @@ def lee_router(grid, pins):
     # initialization
     grid = np.array(grid)
     rows, cols = grid.shape
-    routing_tree = set([pins[0]])
+    source_pin = get_source_pin(pins, rows, cols)
+    routing_tree = set([source_pin])
     all_paths = []
     unrouted_pins = set(pins[1:])
 
