@@ -8,13 +8,10 @@ from vispy.app import use_app
 import algorithm
 from algorithm import lee_router
 
-CANVAS_SIZE = (800, 950)  # (width, height)
+CANVAS_SIZE = (1000, 1200)  # (width, height)
+IMAGE_SHAPE = (1000, 1200)
 
-GRID1 = np.linspace(0, 128, num=10*10, dtype=np.float32).reshape((10, 10))
-GRID2 = np.linspace(255, 0, num=10*10, dtype=np.float32).reshape((10, 10))
-IMAGE_SHAPE = GRID1.shape
-
-COLORMAP_CHOICES = ["grays", "reds", "blues", "viridis"]
+COLORMAP_CHOICES = ["viridis", "hot", "grays", "reds", "blues"]
 LAYER_CHOICES = ["1", "2"]
 
 class MyMainWindow(QtWidgets.QMainWindow):
@@ -69,12 +66,12 @@ class CanvasWrapper:
         self.grid = self.canvas.central_widget.add_grid()
 
         self.view_top = self.grid.add_view(0, 0, bgcolor='gray')
-        #image_data = _generate_grid(IMAGE_SHAPE)
         image_data = _get_lee_router_path()
         IMAGE_SHAPE = image_data.shape
         self.image = visuals.Image(
             image_data,
             texture_format="auto",
+            interpolation="nearest",
             cmap=COLORMAP_CHOICES[0],
             parent=self.view_top.scene,
         )
@@ -125,25 +122,25 @@ def _get_lee_router_path():
     # pins = [(2, 1), (1, 3), (7, 1), (8, 4), (4, 6), (7, 8)]
 
     # ======= TEST 3 =======
-    grid = [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-        [0, 0, 0, 0, 0, 0, -1, 0, -1, -1, -1, 0, -1, 0, 0],
-        [0, 0, 0, 0, 0, -1, -1, 0, -1, -1, -1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, -1, -1, 0, -1, -1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, -1, -1, 0, 0, 0, -1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, -1, -1, -1, 0, -1, -1, 0, 0, 0, 0],
-        [0, -1, 0, 0, -1, 0, -1, -1, 0, -1, 0, 0, 0, 0, 0],
-        [0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, -1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ]
+    # grid = [
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, 0],
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
+    #     [0, 0, 0, 0, 0, 0, -1, 0, -1, -1, -1, 0, -1, 0, 0],
+    #     [0, 0, 0, 0, 0, -1, -1, 0, -1, -1, -1, 0, 0, 0, 0],
+    #     [0, 0, 0, 0, 0, -1, -1, 0, -1, -1, 0, 0, 0, 0, 0],
+    #     [0, 0, 0, 0, 0, -1, -1, 0, 0, 0, -1, 0, 0, 0, 0],
+    #     [0, 0, 0, 0, 0, -1, -1, -1, 0, -1, -1, 0, 0, 0, 0],
+    #     [0, -1, 0, 0, -1, 0, -1, -1, 0, -1, 0, 0, 0, 0, 0],
+    #     [0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #     [0, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #     [0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #     [0, -1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    # ]
 
-    pins = [(2, 1), (6, 2), (12, 2), (6, 10), (2, 14), (12, 12)]
+    # pins = [(2, 1), (6, 2), (12, 2), (6, 10), (2, 14), (12, 12)]
 
     # # ======= TEST 4 =======
     # grid = [
@@ -157,21 +154,20 @@ def _get_lee_router_path():
 
     # pins = [(0, 0), (3, 1), (5, 0), (4, 4), (1, 4)]
     # ======= TEST 5 =======
-    # grid = np.zeros((1000, 1000), dtype=int)
+    grid = np.zeros((1000, 1000), dtype=int)
 
-    # num_obstacles = int(0.10 * 1000 * 1000)
-    # obstacle_indices = random.sample(range(1000 * 1000), num_obstacles)
-    # for idx in obstacle_indices:
-    #     r, c = divmod(idx, 1000)
-    #     grid[r, c] = -1
+    num_obstacles = int(0.10 * 1000 * 1000)
+    obstacle_indices = random.sample(range(1000 * 1000), num_obstacles)
+    for idx in obstacle_indices:
+        r, c = divmod(idx, 1000)
+        grid[r, c] = -1
 
-    # pins = []
-    # while len(pins) < 5:
-    #     r = random.randint(0, 999)
-    #     c = random.randint(0, 999)
-    #     if grid[r, c] == 0:
-    #         pins.append((r, c))
-
+    pins = []
+    while len(pins) < 5:
+        r = random.randint(0, 999)
+        c = random.randint(0, 999)
+        if grid[r, c] == 0:
+            pins.append((r, c))
 
     path = np.array(lee_router(grid, pins), np.float32)
     print(path)
@@ -180,6 +176,9 @@ def _get_lee_router_path():
     gridnp[gridnp == -1] = 128 # Obstacles
     for x, y in path.astype(int):
         gridnp[x, y] = 255
+
+    for x, y in pins:
+        gridnp[x ,y] = 200
 
     return gridnp
 

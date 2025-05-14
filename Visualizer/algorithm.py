@@ -1,4 +1,6 @@
 import numpy as np
+import cProfile, pstats, io
+from pstats import SortKey
 from collections import deque
 
 def lee_router(grid, pins):
@@ -7,12 +9,13 @@ def lee_router(grid, pins):
     pins: list of (row, col) tuples, first is the source, rest are targets
     Returns: list of (row, col) tuples forming a path passing through all pins in order after propagating and backtracking
     """
+    # profiler
+    pr = cProfile.Profile()
+    pr.enable()
 
     if len(pins) <= 1:  # base case: no pins to route
         return []
 
-
-    # initialization
     grid = np.array(grid)
     rows, cols = grid.shape
     routing_tree = set([pins[0]])
@@ -62,7 +65,7 @@ def lee_router(grid, pins):
             if found and distance[target] < min_distance:
                 min_distance = distance[target]
                 closest_pin = target
-                # backtrack 
+                # backtrack
                 path = [target]
                 current = target
                 while distance[current] != 0:
@@ -90,4 +93,11 @@ def lee_router(grid, pins):
                 grid[r, c] = 1  # Mark as routed
         unrouted_pins.remove(closest_pin)
 
+    #profiler output
+    pr.disable()
+    s = io.StringIO()
+    sortby = SortKey.CUMULATIVE
+    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    ps.print_stats()
+    # print(s.getvalue())
     return all_paths
