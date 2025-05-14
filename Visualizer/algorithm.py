@@ -1,116 +1,135 @@
 import numpy as np
-from collections import deque
+import heapq
 
+# selects the source pin based on distance from the corner (x and y distance following manhattan routing)
 def get_source_pin(pins, rows, cols):
-    """
-    Function that retrives the source pin from the list of pins
-    by selecting the pin closest to the corner of the grid.
-    """
-
     corners = [(0, 0), (0, cols - 1), (rows - 1, 0), (rows - 1, cols - 1)]
-
     closest_pin = pins[0]
     min_distance = float('inf')
-
-    # loop over each pin and keep track of min distance between pin and corner
     for pin in pins:
         for corner in corners:
             distance = abs(pin[0] - corner[0]) + abs(pin[1] - corner[1])
             if distance < min_distance:
                 min_distance = distance
                 closest_pin = pin
-
     return closest_pin
+
+# runs dijkstra's algorithm
+def dijkstra(grid, routing_tree, target, preferred_direction, direction_cost):
+    rows, cols = grid.shape
+    cost_grid = np.full((rows, cols), np.inf)
+    path = {}
+    direction_grid = np.full((rows, cols), None)
+    pq = []
     
+    
+    moves = [
+        ((0, 1), 'H'),   # right
+        ((0, -1), 'H'),  # left
+        ((1, 0), 'V'),   # down
+        ((-1, 0), 'V')   # up
+    ]
+    
+    # initialize the pq
+    for cell in routing_tree:
+        cost_grid[cell] = 0
+        direction_grid[cell] = None
+        heapq.heappush(pq, (0, cell, None))
+
+    found = False
+    while pq and not found:
+        current_cost, current, prev_dir = heapq.heappop(pq)
+        r, c = current
+        if current == target:
+            found = True
+            break
+        if current_cost > cost_grid[r, c]:
+            continue
+            
+        # check all possible moves for neighbors
+        for (dr, dc), move_dir in moves:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < rows and 0 <= nc < cols:
+                if grid[nr, nc] == -1:
+                    continue
+                
+                if move_dir == preferred_direction:
+                    move_cost = 1
+                else:
+                    move_cost = direction_cost
+
+                direction_change = prev_dir is not None and move_dir != prev_dir
+                                
+                # considering penalty for direction change
+                new_cost = current_cost + move_cost + (direction_cost if direction_change else 0)
+                
+                if cost_grid[nr, nc] > new_cost:
+                    cost_grid[nr, nc] = new_cost
+                    path[(nr, nc)] = (r, c)
+                    direction_grid[nr, nc] = move_dir
+                    heapq.heappush(pq, (new_cost, (nr, nc), move_dir))
+
+    if found:
+        # traceback the path from the target to the routing tree and return the cost of taking this path
+        path = [target]
+        current = target
+        while current in path:
+            current = path[current]
+            path.append(current)
+        path.reverse()
+        return path, cost_grid[target]
+    else:
+        return [], np.inf
 
 def lee_router(grid, pins):
     """
-    grid: 2D list or np.array, obstacles are -1, empty is 0
-    pins: list of (row, col) tuples, first is the source, rest are targets
-    Returns: list of (row, col) tuples forming a path passing through all pins in order after propagating and backtracking
+    Lee router algorithm implementation
+    Function receives the initialized grid and the pins to be routed as input parameters
+    Router takes into consideration the preferred direction for each layer and using heuristics to determine the source pin
     """
 
-    if len(pins) <= 1:  # base case: no pins to route
+    if len(pins) <= 1:
         return []
 
-
-    # initialization
     grid = np.array(grid)
     rows, cols = grid.shape
+
     source_pin = get_source_pin(pins, rows, cols)
     routing_tree = set([source_pin])
     all_paths = []
-    unrouted_pins = set(pins[1:])
+    unrouted_pins = set(pins) - {source_pin}
+    preferred_direction='H'
+    direction_cost=3 # TODO: using large cost for smaller grids causes errors
 
     # validate pins
     for pin in pins:
         r, c = pin
         if not (0 <= r < rows and 0 <= c < cols) or grid[r, c] == -1:
-            print(f"Pin {pin} is on an obstacle or outside the grid.")
+            raise ValueError(f"Pin {pin} is on an obstacle or outside the grid.")
 
     while unrouted_pins:
         closest_pin = None
-        min_distance = float('inf')
+        min_cost = float('inf')
         best_path = None
-
+        
+        # for every unrouted pin we perform dijkstras from the routing tree to this potential target
         for target in unrouted_pins:
-            # distance grid: -2 = unvisited, -1 = obs, >=0 = dist
-            distance = np.full((rows, cols), -2, dtype=int)
-            for r in range(rows):
-                for c in range(cols):
-                    if grid[r, c] == -1 and (r, c) not in pins:
-                        distance[r, c] = -1
-
-            # perform bfs from all the cells in the routing tree
-            queue = deque()
-            for cell in routing_tree:
-                distance[cell] = 0
-                queue.append(cell)
-
-            directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-            found = False
-
-            while queue and not found:
-                current = queue.popleft()
-                r, c = current
-                for dRow, dCol in directions:
-                    nr, nc = r + dRow, c + dCol
-                    if (0 <= nr < rows and 0 <= nc < cols and distance[nr, nc] == -2):
-                        distance[nr, nc] = distance[r, c] + 1
-                        queue.append((nr, nc))
-                        if (nr, nc) == target:
-                            found = True
-                            break
-
-            if found and distance[target] < min_distance:
-                min_distance = distance[target]
+            path, total_cost = dijkstra(grid, routing_tree, target, preferred_direction, direction_cost)
+            if path and total_cost < min_cost:
+                min_cost = total_cost
                 closest_pin = target
-                # backtrack 
-                path = [target]
-                current = target
-                while distance[current] != 0:
-                    r, c = current
-                    for dRow, dCol in directions:
-                        nr, nc = r + dRow, c + dCol
-                        if (0 <= nr < rows and 0 <= nc < cols and
-                            distance[nr, nc] == distance[r, c] - 1):
-                            path.append((nr, nc))
-                            current = (nr, nc)
-                            break
-                path.reverse()
                 best_path = path
 
         if closest_pin is None:
-            # no path found to any remaining pin
-            return []
+            return all_paths if all_paths else []
 
         # add the best path and update the routing tree
-        all_paths.extend(best_path)
+        all_paths.extend([cell for cell in best_path if cell not in routing_tree])
         for cell in best_path:
             routing_tree.add(cell)
         for r, c in best_path:
             if (r, c) not in pins:
-                grid[r, c] = 1  # Mark as routed
+                grid[r, c] = 1
         unrouted_pins.remove(closest_pin)
 
     return all_paths
