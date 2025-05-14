@@ -19,17 +19,17 @@ def dijkstra(grid, routing_tree, target, preferred_direction, direction_cost):
     rows, cols = grid.shape
     cost_grid = np.full((rows, cols), np.inf)
     path = {}
+    path_copy = {}
     direction_grid = np.full((rows, cols), None)
     pq = []
-    
-    
+
     moves = [
         ((0, 1), 'H'),   # right
         ((0, -1), 'H'),  # left
         ((1, 0), 'V'),   # down
         ((-1, 0), 'V')   # up
     ]
-    
+
     # initialize the pq
     for cell in routing_tree:
         cost_grid[cell] = 0
@@ -45,24 +45,24 @@ def dijkstra(grid, routing_tree, target, preferred_direction, direction_cost):
             break
         if current_cost > cost_grid[r, c]:
             continue
-            
+
         # check all possible moves for neighbors
         for (dr, dc), move_dir in moves:
             nr, nc = r + dr, c + dc
             if 0 <= nr < rows and 0 <= nc < cols:
                 if grid[nr, nc] == -1:
                     continue
-                
+
                 if move_dir == preferred_direction:
                     move_cost = 1
                 else:
                     move_cost = direction_cost
 
                 direction_change = prev_dir is not None and move_dir != prev_dir
-                                
+
                 # considering penalty for direction change
                 new_cost = current_cost + move_cost + (direction_cost if direction_change else 0)
-                
+
                 if cost_grid[nr, nc] > new_cost:
                     cost_grid[nr, nc] = new_cost
                     path[(nr, nc)] = (r, c)
@@ -71,13 +71,13 @@ def dijkstra(grid, routing_tree, target, preferred_direction, direction_cost):
 
     if found:
         # traceback the path from the target to the routing tree and return the cost of taking this path
-        path = [target]
+        path_copy = [target]
         current = target
         while current in path:
             current = path[current]
-            path.append(current)
-        path.reverse()
-        return path, cost_grid[target]
+            path_copy.append(current)
+        path_copy.reverse()
+        return path_copy, cost_grid[target]
     else:
         return [], np.inf
 
@@ -111,7 +111,7 @@ def lee_router(grid, pins):
         closest_pin = None
         min_cost = float('inf')
         best_path = None
-        
+
         # for every unrouted pin we perform dijkstras from the routing tree to this potential target
         for target in unrouted_pins:
             path, total_cost = dijkstra(grid, routing_tree, target, preferred_direction, direction_cost)
