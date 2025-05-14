@@ -90,9 +90,6 @@ def lee_router(grid, pins):
     Function receives the initialized grid and the pins to be routed as input parameters
     Router takes into consideration the preferred direction for each layer and using heuristics to determine the source pin
     """
-    # profiler
-    pr = cProfile.Profile()
-    pr.enable()
 
     if len(pins) <= 1:
         return []
@@ -138,11 +135,4 @@ def lee_router(grid, pins):
                 grid[r, c] = 1
         unrouted_pins.remove(closest_pin)
 
-    #profiler output
-    pr.disable()
-    s = io.StringIO()
-    sortby = SortKey.CUMULATIVE
-    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-    ps.print_stats()
-    print(s.getvalue())
     return all_paths

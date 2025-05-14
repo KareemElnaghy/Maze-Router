@@ -31,8 +31,9 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(central_widget)
 
         self._connect_controls()
+        self._connect_canvas()
 
-    def _connect_canvas_sigs(self):
+    def _connect_canvas(self):
         self._canvas_wrapper.canvas.events.mouse_move.connect(
             lambda event: self._canvas_wrapper.on_mouse_move(event, self._controls.coord_label)
         )
@@ -72,8 +73,6 @@ class Controls(QtWidgets.QWidget):
 
 class CanvasWrapper:
     _is_choosing_pin = False
-    _pins_chosen = []
-    _previous_nets = []
 
     def __init__(self):
         self.canvas = SceneCanvas(size=CANVAS_SIZE)
@@ -97,8 +96,8 @@ class CanvasWrapper:
 
     def update_image(self):
         self.funcWrapper.init_testcase()
+        image_data = self.funcWrapper.update_grid()
         pins = self.funcWrapper.pins
-        image_data = self.funcWrapper.get_lee_router_path()
         IMAGE_SHAPE = image_data.shape
         self.image.set_data(image_data)
 
@@ -143,8 +142,53 @@ class CanvasWrapper:
 class FunctionalityWrapper:
     pins = []
     grid = []
-    current_testcase = 4
+    nets = []
+    previous_paths = []
+    previous_pins = []
+
+    current_testcase = 0
+
+    def get_lee_router_path(self):
+        path = np.array(lee_router(self.grid, self.pins), np.float32)
+        gridnp = np.array(self.grid, np.float32)
+
+        # Color Pins and Obstacles different colors
+        gridnp[gridnp == -1] = 128
+        for x, y in path.astype(int):
+            gridnp[x, y] = 255
+
+        for x, y in self.pins:
+            gridnp[x, y] = 450
+
+        return gridnp
+
+    def update_grid(self):
+        visual_grid = np.array(self.grid, np.float32)
+        logical_grid = np.array(self.grid, np.float32)
+
+        for net in self.nets:
+            path = np.array(lee_router(logical_grid, net), np.float32)
+
+            #obstacles
+            visual_grid[visual_grid == -1] = 128
+
+            #path
+            for x, y in path.astype(int):
+                visual_grid[x, y] = 255
+                logical_grid[x,y] = -1
+
+            for x, y in net:
+                logical_grid[x,y] = -1
+                visual_grid[x, y] = 450
+                self.pins.append((x,y))
+
+            print(visual_grid)
+
+        return visual_grid
+
+
     def init_testcase(self):
+        self.pins = []
         match self.current_testcase:
             case 0:
                 self.grid = [
@@ -160,7 +204,10 @@ class FunctionalityWrapper:
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 ]
 
-                self.pins = [(2, 1), (1, 3), (7, 1), (8, 4), (4, 6), (7, 8)]
+                self.nets = [
+                [(2, 1), (1, 3), (7, 1), (8, 4), (4, 6), (7, 8)],
+                [(0,5), (3,8)],
+                ]
 
             case 1:
                 self.grid = [
@@ -181,7 +228,7 @@ class FunctionalityWrapper:
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 ]
 
-                self.pins = [(2, 1), (6, 2), (12, 2), (6, 10), (2, 14), (12, 12)]
+                self.nets = [[(2, 1), (6, 2), (12, 2), (6, 10), (2, 14), (12, 12)]]
 
             case 2:
                 self.grid = [
@@ -192,11 +239,11 @@ class FunctionalityWrapper:
                     [-1, -1, -1, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0],
                 ]
-                self.pins = [(0, 0), (3, 1), (5, 0), (4, 4), (1, 4)]
+                self.nets = [[(0, 0), (3, 1), (5, 0), (4, 4), (1, 4)]]
 
             case 3:
                 self.grid = np.zeros((6,6), dtype=int)
-                self.pins = [(0,4), (4,0)]
+                self.nets = [[(0,4), (4,0)]]
 
             case _:
                 self.grid = np.zeros((1000, 1000), dtype=int)
@@ -215,19 +262,8 @@ class FunctionalityWrapper:
                     if self.grid[r, c] == 0:
                         self.pins.append((r, c))
 
-    def get_lee_router_path(self):
-        path = np.array(lee_router(self.grid, self.pins), np.float32)
-        gridnp = np.array(self.grid, np.float32)
+                self.nets = [self.pins]
 
-        # Color Pins and Obstacles different colors
-        gridnp[gridnp == -1] = 128
-        for x, y in path.astype(int):
-            gridnp[x, y] = 255
-
-        for x, y in self.pins:
-            gridnp[x, y] = 450
-
-        return gridnp
 
 
 
