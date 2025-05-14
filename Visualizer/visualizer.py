@@ -69,7 +69,6 @@ class CanvasWrapper:
         self.grid = self.canvas.central_widget.add_grid()
 
         self.view_top = self.grid.add_view(0, 0, bgcolor='gray')
-        #image_data = _generate_grid(IMAGE_SHAPE)
         image_data = _get_lee_router_path()
         IMAGE_SHAPE = image_data.shape
         self.image = visuals.Image(
@@ -78,6 +77,14 @@ class CanvasWrapper:
             cmap=COLORMAP_CHOICES[0],
             parent=self.view_top.scene,
         )
+        
+        # kareem: added pin labels
+        pins = [(2, 1), (6, 2), (12, 2), (6, 10), (2, 14), (12, 12)]
+        for i, (x, y) in enumerate(pins):
+            pin_text = visuals.Text(f'P{i+1}', pos=(y+0.5, x+0.5), color='black', 
+                                   font_size=8, anchor_x='center', anchor_y='center',
+                                   parent=self.view_top.scene)
+        
         self.view_top.camera = "panzoom"
         self.view_top.camera.set_range(x=(0, IMAGE_SHAPE[1]), y=(0, IMAGE_SHAPE[0]), margin=0)
 
@@ -180,6 +187,9 @@ def _get_lee_router_path():
     gridnp[gridnp == -1] = 128 # Obstacles
     for x, y in path.astype(int):
         gridnp[x, y] = 255
+
+    for x, y in pins:   # Pins
+        gridnp[x, y] = 450
 
     return gridnp
 
