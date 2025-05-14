@@ -8,11 +8,12 @@ from vispy.app import use_app
 import algorithm
 from algorithm import lee_router
 
-CANVAS_SIZE = (1000, 1200)  # (width, height)
-IMAGE_SHAPE = (1000, 1200)
+CANVAS_SIZE = (1000, 1000)  # (width, height)
+IMAGE_SHAPE = (1000, 1000)
 
 COLORMAP_CHOICES = ["viridis", "hot", "grays", "reds", "blues"]
 LAYER_CHOICES = ["1", "2"]
+TESTCASE_CHOICES = ["0", "1", "2", "3", "4"]
 
 class MyMainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -31,12 +32,15 @@ class MyMainWindow(QtWidgets.QMainWindow):
 
         self._connect_controls()
 
-    def _connect_controls(self):
-        self._controls.colormap_chooser.currentTextChanged.connect(self._canvas_wrapper.set_image_colormap)
+    def _connect_canvas_sigs(self):
         self._canvas_wrapper.canvas.events.mouse_move.connect(
             lambda event: self._canvas_wrapper.on_mouse_move(event, self._controls.coord_label)
         )
+        self._canvas_wrapper.canvas.events.mouse_press.connect(self._canvas_wrapper.on_mouse_press)
 
+    def _connect_controls(self):
+        self._controls.colormap_chooser.currentTextChanged.connect(self._canvas_wrapper.set_image_colormap)
+        self._controls.testcase_chooser.currentTextChanged.connect(self._canvas_wrapper.set_testcase_and_redraw)
 
 class Controls(QtWidgets.QWidget):
     def __init__(self, parent=None):
@@ -47,6 +51,12 @@ class Controls(QtWidgets.QWidget):
         self.colormap_chooser = QtWidgets.QComboBox()
         self.colormap_chooser.addItems(COLORMAP_CHOICES)
         layout.addWidget(self.colormap_chooser)
+
+        self.testcase_label = QtWidgets.QLabel("Testcase Choice:")
+        layout.addWidget(self.testcase_label)
+        self.testcase_chooser = QtWidgets.QComboBox()
+        self.testcase_chooser.addItems(TESTCASE_CHOICES)
+        layout.addWidget(self.testcase_chooser)
 
         self.layer_label = QtWidgets.QLabel("Layer Choice:")
         layout.addWidget(self.layer_label)
@@ -61,26 +71,60 @@ class Controls(QtWidgets.QWidget):
         self.setLayout(layout)
 
 class CanvasWrapper:
+    _is_choosing_pin = False
+    _pins_chosen = []
+    _previous_nets = []
+
     def __init__(self):
         self.canvas = SceneCanvas(size=CANVAS_SIZE)
         self.grid = self.canvas.central_widget.add_grid()
-
         self.view_top = self.grid.add_view(0, 0, bgcolor='gray')
-        image_data = _get_lee_router_path()
-        IMAGE_SHAPE = image_data.shape
+
+        self.funcWrapper = FunctionalityWrapper()
+
+        initial_data = np.zeros((1, 1), dtype=np.float32) # placeholder
         self.image = visuals.Image(
-            image_data,
+            initial_data,
             texture_format="auto",
             interpolation="nearest",
             cmap=COLORMAP_CHOICES[0],
             parent=self.view_top.scene,
         )
+        self._pin_text_visuals = []
+
+        self.funcWrapper.current_testcase = 0
+        self.update_image()
+
+    def update_image(self):
+        self.funcWrapper.init_testcase()
+        pins = self.funcWrapper.pins
+        image_data = self.funcWrapper.get_lee_router_path()
+        IMAGE_SHAPE = image_data.shape
+        self.image.set_data(image_data)
+
+        for visual in self._pin_text_visuals:
+            visual.parent = None
+        self._pin_text_visuals = []
+
+        for i, (x, y) in enumerate(pins):
+            pin_text = visuals.Text(f'P{i+1}', pos=(y+0.5, x+0.5), color='black',
+                                   font_size=8, anchor_x='center', anchor_y='center',
+                                   parent=self.view_top.scene)
+            self._pin_text_visuals.append(pin_text)
+
+
         self.view_top.camera = "panzoom"
         self.view_top.camera.set_range(x=(0, IMAGE_SHAPE[1]), y=(0, IMAGE_SHAPE[0]), margin=0)
+
 
     def set_image_colormap(self, cmap_name: str):
         print(f"Changing image colormap to {cmap_name}")
         self.image.cmap = cmap_name
+
+    def set_testcase_and_redraw(self, testcase_no: str):
+        print(f"Changing test case to {testcase_no}")
+        self.funcWrapper.current_testcase = int(testcase_no)
+        self.update_image()
 
     def on_mouse_move(self, event, label):
         scene_coords = self.view_top.scene.transform.imap(event.pos)
@@ -91,107 +135,100 @@ class CanvasWrapper:
         grid_y = int(x)
         label.setText(f"Grid X: {grid_x}, Grid Y: {grid_y}")
 
+    def on_mouse_press(self, event):
+        scene_coords = self.view_top.scene.transform.imap(event.pos)
+        x, y = scene_coords[:2]
 
-def _get_lee_router_path():
-    # ======= TEST 1 =======
-    # grid = [
-    #     [0, 0, 0, -1, 0],
-    #     [0, 0, 0, -1, 0],
-    #     [0, 0, 0, -1, 0],
-    #     [0, -1, 0, 0, 0],
-    #     [0, -1, -1, 0, 0],
-    # ]
 
-    # pins = [(0,4), (4,0)]
-
-        # ======= TEST 2 =======
-    # grid = [
-    #     [0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, -1, 0, 0, -1, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, -1, -1, -1, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, -1, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, -1, -1, -1, -1],
-    #     [0, 0, 0, 0, 0, 0, -1, 0, 0, 0],
-    #     [0, -1, -1, -1, 0, 0, -1, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-
-    # ]
-
-    # pins = [(2, 1), (1, 3), (7, 1), (8, 4), (4, 6), (7, 8)]
-
-    # ======= TEST 3 =======
-    # grid = [
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-    #     [0, 0, 0, 0, 0, 0, -1, 0, -1, -1, -1, 0, -1, 0, 0],
-    #     [0, 0, 0, 0, 0, -1, -1, 0, -1, -1, -1, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, -1, -1, 0, -1, -1, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, -1, -1, 0, 0, 0, -1, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, -1, -1, -1, 0, -1, -1, 0, 0, 0, 0],
-    #     [0, -1, 0, 0, -1, 0, -1, -1, 0, -1, 0, 0, 0, 0, 0],
-    #     [0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, -1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    # ]
-
-    # pins = [(2, 1), (6, 2), (12, 2), (6, 10), (2, 14), (12, 12)]
-
-    # # ======= TEST 4 =======
-    # grid = [
-    #     [0, -1, 0, 0, 0, 0],
-    #     [0, -1, 0, -1, 0, 0],
-    #     [0, 0, 0, 0, -1, -1],
-    #     [0, 0, -1, 0, 0, 0],
-    #     [-1, -1, -1, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0],
-    # ]
-
-    # pins = [(0, 0), (3, 1), (5, 0), (4, 4), (1, 4)]
-    # ======= TEST 5 =======
-    grid = np.zeros((1000, 1000), dtype=int)
-
-    num_obstacles = int(0.10 * 1000 * 1000)
-    obstacle_indices = random.sample(range(1000 * 1000), num_obstacles)
-    for idx in obstacle_indices:
-        r, c = divmod(idx, 1000)
-        grid[r, c] = -1
-
+class FunctionalityWrapper:
     pins = []
-    while len(pins) < 5:
-        r = random.randint(0, 999)
-        c = random.randint(0, 999)
-        if grid[r, c] == 0:
-            pins.append((r, c))
+    grid = []
+    current_testcase = 4
+    def init_testcase(self):
+        match self.current_testcase:
+            case 0:
+                self.grid = [
+                [0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, -1, 0, 0, -1, 0, 0, 0, 0],
+                [0, 0, 0, 0, -1, -1, -1, 0, 0, 0],
+                [0, 0, 0, 0, 0, -1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, -1, -1, -1, -1],
+                [0, 0, 0, 0, 0, 0, -1, 0, 0, 0],
+                [0, -1, -1, -1, 0, 0, -1, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                ]
 
-    path = np.array(lee_router(grid, pins), np.float32)
-    print(path)
-    gridnp = np.array(grid, np.float32)
+                self.pins = [(2, 1), (1, 3), (7, 1), (8, 4), (4, 6), (7, 8)]
 
-    gridnp[gridnp == -1] = 128 # Obstacles
-    for x, y in path.astype(int):
-        gridnp[x, y] = 255
+            case 1:
+                self.grid = [
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
+                [0, 0, 0, 0, 0, 0, -1, 0, -1, -1, -1, 0, -1, 0, 0],
+                [0, 0, 0, 0, 0, -1, -1, 0, -1, -1, -1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, -1, -1, 0, -1, -1, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, -1, -1, 0, 0, 0, -1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, -1, -1, -1, 0, -1, -1, 0, 0, 0, 0],
+                [0, -1, 0, 0, -1, 0, -1, -1, 0, -1, 0, 0, 0, 0, 0],
+                [0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, -1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                ]
 
-    for x, y in pins:
-        gridnp[x ,y] = 200
+                self.pins = [(2, 1), (6, 2), (12, 2), (6, 10), (2, 14), (12, 12)]
 
-    return gridnp
+            case 2:
+                self.grid = [
+                    [0, -1, 0, 0, 0, 0],
+                    [0, -1, 0, -1, 0, 0],
+                    [0, 0, 0, 0, -1, -1],
+                    [0, 0, -1, 0, 0, 0],
+                    [-1, -1, -1, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0],
+                ]
+                self.pins = [(0, 0), (3, 1), (5, 0), (4, 4), (1, 4)]
 
-def _get_lee_router_path_st():
-    grid = [[0]*1000]*1000
-    pins = [(1,1), (999,100), (999,999), (500,0), (500,999)]
-    path = np.array(lee_router(grid, pins), np.float32)
-    gridnp = np.array(grid, np.float32)
-    for y, x in path.astype(int):
-        gridnp[y, x] = 255
+            case 3:
+                self.grid = np.zeros((6,6), dtype=int)
+                self.pins = [(0,4), (4,0)]
 
-    IMAGE_SHAPE = gridnp.shape
-    return gridnp
+            case _:
+                self.grid = np.zeros((1000, 1000), dtype=int)
+
+                num_obstacles = int(0.10 * 1000 * 1000)
+                obstacle_indices = random.sample(range(1000 * 1000), num_obstacles)
+                for idx in obstacle_indices:
+                    r, c = divmod(idx, 1000)
+                    self.grid[r, c] = -1
+
+                    self.pins = []
+
+                while len(self.pins) < 5:
+                    r = random.randint(0, 999)
+                    c = random.randint(0, 999)
+                    if self.grid[r, c] == 0:
+                        self.pins.append((r, c))
+
+    def get_lee_router_path(self):
+        path = np.array(lee_router(self.grid, self.pins), np.float32)
+        gridnp = np.array(self.grid, np.float32)
+
+        # Color Pins and Obstacles different colors
+        gridnp[gridnp == -1] = 128
+        for x, y in path.astype(int):
+            gridnp[x, y] = 255
+
+        for x, y in self.pins:
+            gridnp[x, y] = 450
+
+        return gridnp
+
 
 
 def _generate_random_image_data(shape, dtype=np.float32):
