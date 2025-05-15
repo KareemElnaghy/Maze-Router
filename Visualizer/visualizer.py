@@ -2,6 +2,7 @@ import numpy as np
 from PyQt6 import QtWidgets
 import random
 
+import os
 from vispy.scene import SceneCanvas, visuals
 from vispy.app import use_app
 
@@ -80,6 +81,8 @@ class CanvasWrapper:
         self.view_top = self.grid.add_view(0, 0, bgcolor='gray')
 
         self.funcWrapper = FunctionalityWrapper()
+
+
 
         initial_data = np.zeros((1, 1), dtype=np.float32) # placeholder
         self.image = visuals.Image(
@@ -182,65 +185,28 @@ class FunctionalityWrapper:
                 visual_grid[x, y] = 450
                 self.pins.append((x,y))
 
-            print(visual_grid)
+            print(visual_grid) #the visual grid is the outputs
 
         return visual_grid
 
 
     def init_testcase(self):
         self.pins = []
+
         match self.current_testcase:
             case 0:
-                self.grid = [
-                [0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, -1, 0, 0, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, -1, -1, -1, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, -1, -1, -1, -1],
-                [0, 0, 0, 0, 0, 0, -1, 0, 0, 0],
-                [0, -1, -1, -1, 0, 0, -1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                ]
 
-                self.nets = [
-                [(2, 1), (1, 3), (7, 1), (8, 4), (4, 6), (7, 8)],
-                [(0,5), (3,8)],
-                ]
+                self.grid = np.genfromtxt("Testcase1/case0.txt", dtype=int, delimiter=",")
+
+                self.nets = eval(open("Testcase1/pins0.txt").read())
 
             case 1:
-                self.grid = [
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-                [0, 0, 0, 0, 0, 0, -1, 0, -1, -1, -1, 0, -1, 0, 0],
-                [0, 0, 0, 0, 0, -1, -1, 0, -1, -1, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, -1, 0, -1, -1, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, -1, 0, 0, 0, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, -1, -1, 0, -1, -1, 0, 0, 0, 0],
-                [0, -1, 0, 0, -1, 0, -1, -1, 0, -1, 0, 0, 0, 0, 0],
-                [0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, -1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                ]
+                self.grid = np.genfromtxt("Testcase2/case1.txt", dtype=int, encoding=None, delimiter=",")
 
-                self.nets = [[(2, 1), (6, 2), (12, 2), (6, 10), (2, 14), (12, 12)]]
-
+                self.nets = eval(open("Testcase2/pins1.txt").read())
             case 2:
-                self.grid = [
-                    [0, -1, 0, 0, 0, 0],
-                    [0, -1, 0, -1, 0, 0],
-                    [0, 0, 0, 0, -1, -1],
-                    [0, 0, -1, 0, 0, 0],
-                    [-1, -1, -1, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                ]
-                self.nets = [[(0, 0), (3, 1), (5, 0), (4, 4), (1, 4)]]
-
+                self.grid = np.genfromtxt("Testcase3/case2.txt", dtype=int, encoding=None, delimiter=",")
+                self.nets = eval(open("Testcase3/pins2.txt").read())
             case 3:
                 self.grid = np.zeros((6,6), dtype=int)
                 self.nets = [[(0,4), (4,0)]]
@@ -263,8 +229,6 @@ class FunctionalityWrapper:
                         self.pins.append((r, c))
 
                 self.nets = [self.pins]
-
-
 
 
 def _generate_random_image_data(shape, dtype=np.float32):
