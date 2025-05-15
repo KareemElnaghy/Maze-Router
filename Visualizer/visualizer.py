@@ -195,18 +195,17 @@ class FunctionalityWrapper:
 
         match self.current_testcase:
             case 0:
-
                 self.grid = np.genfromtxt("Testcase1/case0.txt", dtype=int, delimiter=",")
-
                 self.nets = eval(open("Testcase1/pins0.txt").read())
 
             case 1:
                 self.grid = np.genfromtxt("Testcase2/case1.txt", dtype=int, encoding=None, delimiter=",")
-
                 self.nets = eval(open("Testcase2/pins1.txt").read())
+
             case 2:
                 self.grid = np.genfromtxt("Testcase3/case2.txt", dtype=int, encoding=None, delimiter=",")
                 self.nets = eval(open("Testcase3/pins2.txt").read())
+
             case 3:
                 self.grid = np.zeros((6,6), dtype=int)
                 self.nets = [[(0,4), (4,0)]]
