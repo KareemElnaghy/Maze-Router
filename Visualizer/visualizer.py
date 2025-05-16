@@ -8,6 +8,9 @@ from vispy.app import use_app
 import algorithm
 from algorithm import lee_router
 
+import file_handling
+from file_handling import input_file
+
 CANVAS_SIZE = (1000, 1000)  # (width, height)
 IMAGE_SHAPE = (1000, 1000)
 
@@ -406,28 +409,11 @@ class FunctionalityWrapper:
 
     # Keep your init_testcase method unchanged
 
-
     def init_testcase(self):
         self.pins = []
         match self.current_testcase:
             case 0:
-                self.grid = [
-                [0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, -1, 0, 0, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, -1, -1, -1, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, -1, -1, -1, -1],
-                [0, 0, 0, 0, 0, 0, -1, 0, 0, 0],
-                [0, -1, -1, -1, 0, 0, -1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                ]
-
-                self.nets = [
-                [(2, 1), (1, 3), (7, 1), (8, 4), (4, 6), (7, 8)],
-                [(0,5), (3,8)],
-                ]
+                self.grid , self.nets = input_file("case0.txt") 
 
             case 1:
                 self.grid = [
@@ -504,9 +490,6 @@ class FunctionalityWrapper:
 
                 self.nets = [[(0,5,5), (0, 0,3), (0, 2, 1)], [(1,4,3)]]
             
-
-
-
 
 def _generate_random_image_data(shape, dtype=np.float32):
     rng = np.random.default_rng()
