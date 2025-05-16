@@ -1,20 +1,20 @@
-def input_file(filename):
+def input_file(filename, num_grids=2):
     obs = []
     nets = []
 
     with open(filename, "r") as file:
         lines = file.readlines()
 
-    line = lines[0].strip()
+    rows, cols = map(int, lines[0].strip().lower().split('x'))
 
-    # obstacles
+    # Extract obstacles
     for x in lines[1:]:
         if x.upper().startswith("OBS"):
             y = x.strip().split('OBS')[-1]
             tup = eval(y)
             obs.append(tup)
 
-    # nets
+    # Extract nets
     for z in lines[1:]:
         if z.lower().startswith('net'):
             z = z.strip()
@@ -23,25 +23,21 @@ def input_file(filename):
             list_of_tuples = eval(f'[{sub_net}]')
             nets.append(list_of_tuples)
 
-    # extract grid size
-    rows, cols = map(int, line.lower().split('x'))
+    grids = []
+    for _ in range(num_grids):
+        grids.append([[0] * cols for _ in range(rows)])
 
-    # initialize two grids
-    grid1 = [[0] * cols for _ in range(rows)]
-    grid2 = [[0] * cols for _ in range(rows)]
+    if num_grids == 2:
+        half = len(obs) // 2
+        obs1 = obs[:half]
+        obs2 = obs[half:]
 
-    # split obstacles
-    half = len(obs) // 2
-    obs1 = obs[:half]
-    obs2 = obs[half:]
+        for x, y in obs1:
+            grids[0][x][y] = -1
+        for x, y in obs2:
+            grids[1][x][y] = -1
+    elif num_grids == 1:
+        for x, y in obs:
+            grids[0][x][y] = -1
 
-    # place obstacles in grid1
-    for x, y in obs1:
-        grid1[x][y] = -1
-
-    # place obstacles in grid2
-    for x, y in obs2:
-        grid2[x][y] = -1
-
-    # return as list of grids
-    return [grid1, grid2], nets
+    return grids, nets

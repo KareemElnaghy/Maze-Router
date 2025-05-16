@@ -413,79 +413,18 @@ class FunctionalityWrapper:
         self.pins = []
         match self.current_testcase:
             case 0:
-                self.grid = [
-                [0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, -1, 0, 0, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, -1, -1, -1, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, -1, -1, -1, -1],
-                [0, 0, 0, 0, 0, 0, -1, 0, 0, 0],
-                [0, -1, -1, -1, 0, 0, -1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                ]
-
-                self.nets = [
-                [(2, 1), (1, 3), (7, 1), (8, 4), (4, 6), (7, 8)],
-                [(0,5), (3,8)],
-                ]
+                self.grid, self.nets = input_file('case0.txt',1) 
 
             case 1:
-                self.grid = [
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-                [0, 0, 0, 0, 0, 0, -1, 0, -1, -1, -1, 0, -1, 0, 0],
-                [0, 0, 0, 0, 0, -1, -1, 0, -1, -1, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, -1, 0, -1, -1, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, -1, 0, 0, 0, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, -1, -1, 0, -1, -1, 0, 0, 0, 0],
-                [0, -1, 0, 0, -1, 0, -1, -1, 0, -1, 0, 0, 0, 0, 0],
-                [0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, -1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                ]
-
-                self.nets = [[(2, 1), (6, 2), (12, 2), (6, 10), (2, 14), (12, 12)]]
-
+                self.grid, self.nets = input_file('case1.txt',1) 
             case 2:
-                self.grid = [
-                    [0, -1, 0, 0, 0, 0],
-                    [0, -1, 0, -1, 0, 0],
-                    [0, 0, 0, 0, -1, -1],
-                    [0, 0, -1, 0, 0, 0],
-                    [-1, -1, -1, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                ]
-                self.nets = [[(0, 0), (3, 1), (5, 0), (4, 4), (1, 4)]]
+                self.grid, self.nets = input_file('case2.txt',1) 
 
             case 3:
-                self.grid = np.zeros((6,6), dtype=int)
-                self.nets = [[(0,4), (4,0)]]
+                self.grid, self.nets = input_file('case3.txt',1) 
 
-            case _:
-                # self.grid = np.zeros((1000, 1000), dtype=int)
-
-                # num_obstacles = int(0.10 * 1000 * 1000)
-                # obstacle_indices = random.sample(range(1000 * 1000), num_obstacles)
-                # for idx in obstacle_indices:
-                #     r, c = divmod(idx, 1000)
-                #     self.grid[r, c] = -1
-
-                #     self.pins = []
-
-                # while len(self.pins) < 5:
-                #     r = random.randint(0, 999)
-                #     c = random.randint(0, 999)
-                #     if self.grid[r, c] == 0:
-                #         self.pins.append((r, c))
-
-                # self.nets = [self.pins]
-                self.grid, self.nets = input_file('case0.txt')
+            case 4:
+                self.grid, self.nets = input_file('case4.txt')
             
 
 def _generate_random_image_data(shape, dtype=np.float32):
