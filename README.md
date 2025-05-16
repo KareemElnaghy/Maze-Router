@@ -14,6 +14,7 @@ chmod +x ./.git/hooks/pre-commit
 > or the equivalent to your system
 
 ### Python Virtual Environment
+Use python `Python3.10` and above
 
 #### Set up a virtual environemnt for Python at the root of the project
 ```bash
