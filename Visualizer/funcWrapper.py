@@ -2,6 +2,9 @@ import numpy as np
 import algorithm
 from algorithm import lee_router
 
+import file_handling
+from file_handling import input_file
+
 class FunctionalityWrapper:
     pins = []
     grid = []
@@ -25,7 +28,7 @@ class FunctionalityWrapper:
                 path = np.array(lee_router(logical_grid, net), np.float32)
 
                 #obstacles
-                visual_grid[visual_grid == -1] = 50
+                visual_grid[visual_grid == -1] = 64
 
                 #path
                 for x, y in path.astype(int):
@@ -57,63 +60,17 @@ class FunctionalityWrapper:
         self.pins = []
         match self.current_testcase:
             case 0:
-                self.grid = [[
-                [0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, -1, 0, 0, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, -1, -1, -1, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, -1, -1, -1, -1],
-                [0, 0, 0, 0, 0, 0, -1, 0, 0, 0],
-                [0, -1, -1, -1, 0, 0, -1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                ]]
+                self.grid, self.nets = input_file('Testcases/case0.txt',1)
                 self.multiLayer = False
-                self.nets = [
-                [(0, 2, 1), (0, 1, 3), (0, 7, 1), (0, 8, 4), (0, 4, 6), (0, 7, 8)],
-                [(0, 0,5), (0, 3,8)],
-                ]
-
             case 1:
-                self.grid = [[
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-                [0, 0, 0, 0, 0, 0, -1, 0, -1, -1, -1, 0, -1, 0, 0],
-                [0, 0, 0, 0, 0, -1, -1, 0, -1, -1, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, -1, 0, -1, -1, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, -1, 0, 0, 0, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, -1, -1, 0, -1, -1, 0, 0, 0, 0],
-                [0, -1, 0, 0, -1, 0, -1, -1, 0, -1, 0, 0, 0, 0, 0],
-                [0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, -1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                ]]
+                self.grid, self.nets = input_file('Testcases/case1.txt',1)
                 self.multiLayer = False
-
-                self.nets = [[(0, 2, 1), (0, 6, 2), (0, 12, 2), (0, 6, 10), (0, 2, 14), (0, 12, 12)]]
-
             case 2:
-                self.grid = [[
-                    [0, -1, 0, 0, 0, 0],
-                    [0, -1, 0, -1, 0, 0],
-                    [0, 0, 0, 0, -1, -1],
-                    [0, 0, -1, 0, 0, 0],
-                    [-1, -1, -1, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                ]]
+                self.grid, self.nets = input_file('Testcases/case2.txt',1)
                 self.multiLayer = False
-                self.nets = [[(0, 0, 0), (0, 3, 1), (0, 5, 0), (0, 4, 4), (0, 1, 4)]]
-
             case 3:
-                self.grid = [np.zeros((6,6), dtype=int)]
+                self.grid, self.nets = input_file('Testcases/case3.txt',1)
                 self.multiLayer = False
-                self.nets = [[(0, 0,4), (0, 4,0)]]
-
             case _:
                 # self.grid = np.zeros((1000, 1000), dtype=int)
 
@@ -132,27 +89,5 @@ class FunctionalityWrapper:
                 #         self.pins.append((r, c))
 
                 # self.nets = [self.pins]
-                self.grid =  [
-                    [
-                        [0, 0, 0, 0, 0, 0],
-                        [0, 0, -1, 0, 0, 0],
-                        [0, 0, -1, -1, 0, 0],
-                        [0, 0, 0, -1, 0, 0],
-                        [0, 0, 0, -1, 0, 0],
-                        [0, 0, 0, 0, 0, 0],
-                    ],
-                    [
-                        [0, 0, 0, 0, 0, 0],
-                        [0, 0, -1, 0, 0, 0],
-                        [0, 0, -1, 0, 0, 0],
-                        [0, 0, -1, -1, -1, 0],
-                        [0, 0, 0, 0, -1, 0],
-                        [0, 0, 0, 0, 0, 0],
-                    ]
-                ]
-
+                self.grid, self.nets = input_file('Testcases/case4.txt')
                 self.multiLayer = True
-                self.nets = [
-                    [(0,5,5), (0, 0,3), (0, 2, 1)],
-                    [(1,4,3), (1,4,0)]
-                ]

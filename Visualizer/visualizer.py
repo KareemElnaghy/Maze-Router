@@ -1,12 +1,9 @@
 import numpy as np
 from PyQt6 import QtWidgets
 
-import funcWrapper
-from funcWrapper import FunctionalityWrapper
+from Visualizer.funcWrapper import FunctionalityWrapper
 
 from vispy.scene import SceneCanvas, visuals
-from vispy.app import use_app
-from vispy.visuals.filters import Alpha
 from vispy.visuals.transforms import STTransform
 
 CANVAS_SIZE = (1000, 1000)  # (width, height)
@@ -230,10 +227,3 @@ class CanvasWrapper:
     def on_mouse_press(self, event):
         scene_coords = self.view_top.scene.transform.imap(event.pos)
         x, y = scene_coords[:2]
-
-if __name__ == "__main__":
-    app = use_app("pyqt6")
-    app.create()
-    win = MyMainWindow()
-    win.show()
-    app.run()
