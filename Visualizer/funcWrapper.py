@@ -16,6 +16,8 @@ class FunctionalityWrapper:
     multiLayer = False
     current_layer_displayed = 0
 
+    asyn_task_done = False
+
     def update_grid(self):
         visual_grid_3d = np.array(self.grid, np.float32)
         logical_grid_3d = np.array(self.grid, np.float32)
@@ -25,21 +27,21 @@ class FunctionalityWrapper:
         filtered_nets = self.filter_nets_by_layer()
 
         for net in filtered_nets:
-                path = np.array(lee_router(logical_grid, net), np.float32)
+            path = np.array(lee_router(logical_grid, net), np.float32)
 
-                #obstacles
-                visual_grid[visual_grid == -1] = 64
+            #obstacles
+            visual_grid[visual_grid == -1] = 64
 
-                #path
-                for x, y in path.astype(int):
-                    visual_grid[x, y] = 320
-                    logical_grid[x,y] = -1
+            #path
+            for x, y in path.astype(int):
+                visual_grid[x, y] = 320
+                logical_grid[x,y] = -1
 
-                # pins
-                for x, y in net:
-                    logical_grid[x,y] = -1
-                    visual_grid[x, y] = 512
-                    self.pins.append((x,y))
+            # pins
+            for x, y in net:
+                logical_grid[x,y] = -1
+                visual_grid[x, y] = 512
+                self.pins.append((x,y))
 
         return visual_grid
 
@@ -71,32 +73,42 @@ class FunctionalityWrapper:
             case 3:
                 self.grid, self.nets = input_file('Testcases/case3.txt')
                 self.multiLayer = False
-
-            # 1000x1000 grid
             case 4:
                 self.grid, self.nets = input_file('Testcases/case4.txt')
                 self.multiLayer = True
 
+            # 1000x1000 random Grid testcase
+            case 5:
+                self.nets = []
+                grid_layer_0 = np.zeros((1000, 1000), dtype=int)
+                grid_layer_1 = np.zeros((1000, 1000), dtype=int)
+
+                num_obstacles = int(0.10 * 1000 * 1000)
+                obstacle_indices = np.random.choice(1000*1000, num_obstacles, replace=False)
+
+                for idx in obstacle_indices:
+                    r, c = divmod(idx, 1000)
+                    grid_layer_0[r, c] = -1
+
+                rand_pins = []
+
+                # generate 2 nets of 5 random pins on grid layer 0
+                while len(self.nets) < 2:
+                    while len(rand_pins) < 5:
+                        r = np.random.randint(0, 999)
+                        c = np.random.randint(0, 999)
+                        if grid_layer_0[r, c] == 0 and grid_layer_1[r,c] == 0:
+                            rand_pins.append((0, r, c))
+                    self.nets.append(rand_pins)
+                    rand_pins = []
+
+                self.grid = [grid_layer_0, grid_layer_1]
+
             # user inputted testcase file
-            #case -1:
+            case -1:
+                self.grid, self.nets = input_file('Testcases/user_input_case.txt')
+                self.multiLayer = True
 
             case _:
-                # self.grid = np.zeros((1000, 1000), dtype=int)
-
-                # num_obstacles = int(0.10 * 1000 * 1000)
-                # obstacle_indices = random.sample(range(1000 * 1000), num_obstacles)
-                # for idx in obstacle_indices:
-                #     r, c = divmod(idx, 1000)
-                #     self.grid[r, c] = -1
-
-                #     self.pins = []
-
-                # while len(self.pins) < 5:
-                #     r = random.randint(0, 999)
-                #     c = random.randint(0, 999)
-                #     if self.grid[r, c] == 0:
-                #         self.pins.append((r, c))
-
-                # self.nets = [self.pins]
                 self.grid, self.nets = input_file('Testcases/case4.txt')
                 self.multiLayer = True
