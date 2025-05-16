@@ -1,12 +1,13 @@
 import numpy as np
 from PyQt6 import QtWidgets
-import random
+
+import funcWrapper
+from funcWrapper import FunctionalityWrapper
 
 from vispy.scene import SceneCanvas, visuals
 from vispy.app import use_app
-
-import algorithm
-from algorithm import lee_router
+from vispy.visuals.filters import Alpha
+from vispy.visuals.transforms import STTransform
 
 CANVAS_SIZE = (1000, 1000)  # (width, height)
 IMAGE_SHAPE = (1000, 1000)
@@ -74,7 +75,9 @@ class Controls(QtWidgets.QWidget):
 
 class CanvasWrapper:
     _is_choosing_pin = False
-    _active_layer = "Layer 0"  # Default active layer
+    _active_layer : int = 0
+    _overlayed_image = None
+    _chosen_cmap = COLORMAP_CHOICES[0]
 
     def __init__(self):
         self.canvas = SceneCanvas(size=CANVAS_SIZE)
@@ -88,7 +91,7 @@ class CanvasWrapper:
             initial_data,
             texture_format="auto",
             interpolation="nearest",
-            cmap=COLORMAP_CHOICES[0],
+            cmap=self._chosen_cmap,
             parent=self.view_top.scene,
         )
         self._pin_text_visuals = []
@@ -96,40 +99,90 @@ class CanvasWrapper:
         self.funcWrapper.current_testcase = 0
         self.update_image()
 
-    def update_image(self):
-        self.funcWrapper.init_testcase()
-        image_data = self.funcWrapper.update_grid(self._active_layer)
-        pins = self.funcWrapper.pins
-        IMAGE_SHAPE = image_data.shape
-        self.image.set_data(image_data)
+    def show_combined_view(self, layer_0_vg, layer_1_vg, pins):
+        self.image.set_data(layer_0_vg)
+        self.image.order = 0
 
-        for visual in self._pin_text_visuals:
-            visual.parent = None
-        self._pin_text_visuals = []
+        self._overlayed_image = visuals.Image(
+            layer_1_vg,
+            texture_format="auto",
+            interpolation="nearest",
+            cmap=self._chosen_cmap,
+            parent=self.view_top.scene,
+        )
+        self._overlayed_image.order = 1  # draw the overlayed image second
 
-        for i, pin in enumerate(pins):
-            # Handle both 2D and 3D pins for visualization
-            if len(pin) == 3:  # 3D pin (layer, row, col)
-                l, r, c = pin
-                # Only show pins for the active layer or all pins in combined view
-                if self._active_layer == "Combined" or self._active_layer == f"Layer {l}":
-                    pin_text = visuals.Text(f'P{i+1}', pos=(c+0.5, r+0.5), color='black',
-                                        font_size=8, anchor_x='center', anchor_y='center',
-                                        parent=self.view_top.scene)
-                    self._pin_text_visuals.append(pin_text)
-            else:  # 2D pin (row, col)
-                r, c = pin
-                pin_text = visuals.Text(f'P{i+1}', pos=(c+0.5, r+0.5), color='black',
-                                    font_size=8, anchor_x='center', anchor_y='center',
-                                    parent=self.view_top.scene)
-                self._pin_text_visuals.append(pin_text)
+        # configure opengl blend mode for proper compositing
+        self._overlayed_image.opacity = 0.8
+        self._overlayed_image.set_gl_state('translucent', depth_test=False, cull_face=False, blend=True,
+                                          blend_func=('src_alpha', 'one_minus_src_alpha'))
+
+        IMAGE_SHAPE = layer_0_vg.shape
+        self.clear_pins_text()
+        self.show_pins_text(pins)
 
         self.view_top.camera = "panzoom"
         self.view_top.camera.set_range(x=(0, IMAGE_SHAPE[1]), y=(0, IMAGE_SHAPE[0]), margin=0)
 
+    def show_single_view(self):
+        self.funcWrapper.current_layer_displayed = self._active_layer
+        image_data = self.funcWrapper.update_grid()
+        pins = self.funcWrapper.pins
+
+        IMAGE_SHAPE = image_data.shape
+        self.image.set_data(image_data)
+
+        self.clear_pins_text()
+        self.show_pins_text(pins)
+
+        self.view_top.camera = "panzoom"
+        self.view_top.camera.set_range(x=(0, IMAGE_SHAPE[1]), y=(0, IMAGE_SHAPE[0]), margin=0)
+
+    def update_image(self):
+        if self._overlayed_image is not None:
+            self._overlayed_image.parent = None
+            self._overlayed_image = None
+
+        # have funcWrapper update its member attributes
+        self.funcWrapper.init_testcase()
+
+        # if it is Combined view get the two visual grids of our layers and pass it to show_combined view
+        # Do not render if the grid is not multilayer and tries accessing other layer
+        # Ideally we should lock the choices in the UI using QT but whatever this is Q&D
+        if self._active_layer == -1 and self.funcWrapper.multiLayer:
+            self.funcWrapper.current_layer_displayed = 0
+            layer_0_vg = self.funcWrapper.update_grid()
+            pins =  self.funcWrapper.pins
+
+            self.funcWrapper.current_layer_displayed = 1
+            layer_1_vg = self.funcWrapper.update_grid()
+
+            self.show_combined_view(layer_0_vg, layer_1_vg, pins)
+        else:
+            if not self.funcWrapper.multiLayer and self._active_layer != 0:
+                return
+            self.show_single_view()
+
+    def clear_pins_text(self):
+        for visual in self._pin_text_visuals:
+            visual.parent = None
+        self._pin_text_visuals = []
+
+    def show_pins_text(self, pins):
+        for i, pin in enumerate(pins):
+            r, c = pin
+            pin_text = visuals.Text(f'P{r},{c}', pos=(c+0.5, r+0.5), color='black',
+                                font_size=8, anchor_x='center', anchor_y='center',
+                                parent=self.view_top.scene)
+            pin_text.order = 1
+            self._pin_text_visuals.append(pin_text)
+
     def set_image_colormap(self, cmap_name: str):
         print(f"Changing image colormap to {cmap_name}")
+        self._chosen_cmap = cmap_name
         self.image.cmap = cmap_name
+        if self._overlayed_image is not None:
+            self._overlayed_image.cmap = cmap_name
 
     def set_testcase_and_redraw(self, testcase_no: str):
         print(f"Changing test case to {testcase_no}")
@@ -138,8 +191,24 @@ class CanvasWrapper:
 
     def set_active_layer_and_redraw(self, layer_name: str):
         print(f"Changing active layer to {layer_name}")
-        self._active_layer = layer_name
+        self._active_layer = CanvasWrapper.layer_name_to_int(layer_name)
         self.update_image()
+
+    # AW: TODO: move this to a util/lib Class
+    @staticmethod
+    def layer_name_to_int(layer_name : str):
+        match layer_name:
+            case "Layer 0":
+                return 0
+
+            case "Layer 1":
+                return 1
+
+            case "Combined":
+                return -1
+
+            case _:
+                return 0
 
     def on_mouse_move(self, event, label):
         scene_coords = self.view_top.scene.transform.imap(event.pos)
@@ -162,127 +231,6 @@ class CanvasWrapper:
         scene_coords = self.view_top.scene.transform.imap(event.pos)
         x, y = scene_coords[:2]
         # Here you could implement adding pins with layer info
-
-
-class FunctionalityWrapper:
-    pins = []
-    grid = []
-    nets = []
-    previous_paths = []
-    previous_pins = []
-
-    current_testcase = 0
-
-
-
-    def init_testcase(self):
-        self.pins = []
-        match self.current_testcase:
-            case 0:
-                self.grid = [
-                [0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, -1, 0, 0, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, -1, -1, -1, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, -1, -1, -1, -1],
-                [0, 0, 0, 0, 0, 0, -1, 0, 0, 0],
-                [0, -1, -1, -1, 0, 0, -1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                ]
-
-                self.nets = [
-                [(2, 1), (1, 3), (7, 1), (8, 4), (4, 6), (7, 8)],
-                [(0,5), (3,8)],
-                ]
-
-            case 1:
-                self.grid = [
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, 0],
-                [0, 0, 0, 0, 0, 0, -1, 0, -1, -1, -1, 0, -1, 0, 0],
-                [0, 0, 0, 0, 0, -1, -1, 0, -1, -1, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, -1, 0, -1, -1, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, -1, 0, 0, 0, -1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, -1, -1, -1, 0, -1, -1, 0, 0, 0, 0],
-                [0, -1, 0, 0, -1, 0, -1, -1, 0, -1, 0, 0, 0, 0, 0],
-                [0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, -1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                ]
-
-                self.nets = [[(2, 1), (6, 2), (12, 2), (6, 10), (2, 14), (12, 12)]]
-
-            case 2:
-                self.grid = [
-                    [0, -1, 0, 0, 0, 0],
-                    [0, -1, 0, -1, 0, 0],
-                    [0, 0, 0, 0, -1, -1],
-                    [0, 0, -1, 0, 0, 0],
-                    [-1, -1, -1, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                ]
-                self.nets = [[(0, 0), (3, 1), (5, 0), (4, 4), (1, 4)]]
-
-            case 3:
-                self.grid = np.zeros((6,6), dtype=int)
-                self.nets = [[(0,4), (4,0)]]
-
-            case _:
-                # self.grid = np.zeros((1000, 1000), dtype=int)
-
-                # num_obstacles = int(0.10 * 1000 * 1000)
-                # obstacle_indices = random.sample(range(1000 * 1000), num_obstacles)
-                # for idx in obstacle_indices:
-                #     r, c = divmod(idx, 1000)
-                #     self.grid[r, c] = -1
-
-                #     self.pins = []
-
-                # while len(self.pins) < 5:
-                #     r = random.randint(0, 999)
-                #     c = random.randint(0, 999)
-                #     if self.grid[r, c] == 0:
-                #         self.pins.append((r, c))
-
-                # self.nets = [self.pins]
-                self.grid =  [
-                    [
-                        [0, 0, 0, 0, 0, 0],
-                        [0, 0, -1, 0, 0, 0],
-                        [0, 0, -1, -1, 0, 0],
-                        [0, 0, 0, -1, 0, 0],
-                        [0, 0, 0, -1, 0, 0],
-                        [0, 0, 0, 0, 0, 0],
-                    ],
-                    [
-                        [0, 0, 0, 0, 0, 0],
-                        [0, 0, -1, 0, 0, 0],
-                        [0, 0, -1, 0, 0, 0],
-                        [0, 0, -1, -1, -1, 0],
-                        [0, 0, 0, 0, -1, 0],
-                        [0, 0, 0, 0, 0, 0],
-                    ]
-                ]
-
-                self.nets = [[(0,5,5), (0, 0,3), (0, 2, 1)], [(1,4,3)]]
-
-
-
-
-
-def _generate_random_image_data(shape, dtype=np.float32):
-    rng = np.random.default_rng()
-    data = rng.random(shape, dtype=dtype)
-    return data
-
-def _generate_grid(shape, dtype=np.float32):
-    return GRID1;
 
 if __name__ == "__main__":
     app = use_app("pyqt6")
