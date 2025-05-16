@@ -230,7 +230,6 @@ class CanvasWrapper:
     def on_mouse_press(self, event):
         scene_coords = self.view_top.scene.transform.imap(event.pos)
         x, y = scene_coords[:2]
-        # Here you could implement adding pins with layer info
 
 if __name__ == "__main__":
     app = use_app("pyqt6")
