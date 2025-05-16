@@ -60,17 +60,26 @@ class FunctionalityWrapper:
         self.pins = []
         match self.current_testcase:
             case 0:
-                self.grid, self.nets = input_file('Testcases/case0.txt',1)
+                self.grid, self.nets = input_file('Testcases/case0.txt')
                 self.multiLayer = False
             case 1:
-                self.grid, self.nets = input_file('Testcases/case1.txt',1)
+                self.grid, self.nets = input_file('Testcases/case1.txt')
                 self.multiLayer = False
             case 2:
-                self.grid, self.nets = input_file('Testcases/case2.txt',1)
+                self.grid, self.nets = input_file('Testcases/case2.txt')
                 self.multiLayer = False
             case 3:
-                self.grid, self.nets = input_file('Testcases/case3.txt',1)
+                self.grid, self.nets = input_file('Testcases/case3.txt')
                 self.multiLayer = False
+
+            # 1000x1000 grid
+            case 4:
+                self.grid, self.nets = input_file('Testcases/case4.txt')
+                self.multiLayer = True
+
+            # user inputted testcase file
+            #case -1:
+
             case _:
                 # self.grid = np.zeros((1000, 1000), dtype=int)
 

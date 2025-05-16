@@ -2,6 +2,7 @@ import numpy as np
 from PyQt6 import QtWidgets
 
 from Visualizer.funcWrapper import FunctionalityWrapper
+from Visualizer.utils import Utils
 
 from vispy.scene import SceneCanvas, visuals
 from vispy.visuals.transforms import STTransform
@@ -11,7 +12,7 @@ IMAGE_SHAPE = (1000, 1000)
 
 COLORMAP_CHOICES = ["viridis", "hot", "grays", "reds", "blues"]
 LAYER_CHOICES = ["Layer 0", "Layer 1", "Combined"]
-TESTCASE_CHOICES = ["0", "1", "2", "3", "4"]
+TESTCASE_CHOICES = ["0", "1", "2", "3", "4", "User Input"]
 
 class MyMainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -82,8 +83,6 @@ class CanvasWrapper:
         self.view_top = self.grid.add_view(0, 0, bgcolor='gray')
 
         self.funcWrapper = FunctionalityWrapper()
-
-
 
         initial_data = np.zeros((1, 1), dtype=np.float32) # placeholder
         self.image = visuals.Image(
@@ -185,29 +184,13 @@ class CanvasWrapper:
 
     def set_testcase_and_redraw(self, testcase_no: str):
         print(f"Changing test case to {testcase_no}")
-        self.funcWrapper.current_testcase = int(testcase_no)
+        self.funcWrapper.current_testcase = Utils.testcase_name_to_int(testcase_no)
         self.update_image()
 
     def set_active_layer_and_redraw(self, layer_name: str):
         print(f"Changing active layer to {layer_name}")
-        self._active_layer = CanvasWrapper.layer_name_to_int(layer_name)
+        self._active_layer = Utils.layer_name_to_int(layer_name)
         self.update_image()
-
-    # AW: TODO: move this to a util/lib Class
-    @staticmethod
-    def layer_name_to_int(layer_name : str):
-        match layer_name:
-            case "Layer 0":
-                return 0
-
-            case "Layer 1":
-                return 1
-
-            case "Combined":
-                return -1
-
-            case _:
-                return 0
 
     def on_mouse_move(self, event, label):
         scene_coords = self.view_top.scene.transform.imap(event.pos)
