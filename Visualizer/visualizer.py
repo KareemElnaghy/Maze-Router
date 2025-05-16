@@ -83,6 +83,8 @@ class CanvasWrapper:
 
         self.funcWrapper = FunctionalityWrapper()
 
+
+
         initial_data = np.zeros((1, 1), dtype=np.float32) # placeholder
         self.image = visuals.Image(
             initial_data,
