@@ -4,8 +4,8 @@ from pstats import SortKey
 from collections import deque
 import heapq
 
-direction_cost=10
-via_cost=2
+direction_cost=2
+via_cost=20
 
 # selects the source pin based on distance from the corner (x and y distance following manhattan routing)
 # starts from the first metal layer
