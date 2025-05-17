@@ -4,8 +4,8 @@ from pstats import SortKey
 from collections import deque
 import heapq
 
-direction_cost=3
-via_cost=5
+direction_cost=2
+via_cost=20
 
 # selects the source pin based on distance from the corner (x and y distance following manhattan routing)
 # starts from the first metal layer
@@ -48,6 +48,8 @@ def dijkstra(grid, routing_tree, target, preferred_directions, direction_cost, v
         heapq.heappush(pq, (0, cell, None))
 
     found = False
+    
+
     while pq and not found:
         current_cost, current, prev_dir = heapq.heappop(pq)
         l, r, c = current
@@ -85,27 +87,33 @@ def dijkstra(grid, routing_tree, target, preferred_directions, direction_cost, v
             if 0 <= nl < layers:
                 if grid[nl, r, c] == -1: 
                     continue
-                
-                new_cost = current_cost + via_cost
-                
+        
+                # Add a small bias to via cost to break ties in favor of non-preferred direction
+                new_cost = current_cost + via_cost + 0.1
+        
                 if cost_grid[nl, r, c] > new_cost:
                     cost_grid[nl, r, c] = new_cost
                     path[(nl, r, c)] = (l, r, c)
                     direction_grid[nl, r, c] = 'Via'
-                    # Reset direction after via
                     heapq.heappush(pq, (new_cost, (nl, r, c), None))
     
     if found:
         # Reconstruct path
         path_copy = [target]
+        via_locations = [] 
         current = target
         while current in path:
-            current = path[current]
+            prev = path[current]
+
+            if current[0] != prev[0]:
+                via_locations.append((current[1], current[2]))
+            current = prev
             path_copy.append(current)
         path_copy.reverse()
-        return path_copy, cost_grid[target]
+        via_locations.reverse()  # Reverse to maintain order from source to target
+        return path_copy, cost_grid[target], via_locations
     else:
-        return [], np.inf
+        return [], np.inf, []
 
 def lee_router_multi(grid, pins, direction_cost=3, via_cost=5):
     """Multi-layer Lee router implementation"""
@@ -150,6 +158,7 @@ def lee_router_multi(grid, pins, direction_cost=3, via_cost=5):
     source_pin = get_source_pin(pins, rows, cols)
     routing_tree = set([source_pin])
     all_paths = []
+    all_vias = []
     unrouted_pins = set(pins) - {source_pin}
 
     # Validate pins
@@ -164,32 +173,33 @@ def lee_router_multi(grid, pins, direction_cost=3, via_cost=5):
         best_path = None
         
         for target in unrouted_pins:
-            path, total_cost = dijkstra(grid, routing_tree, target, 
+            path, total_cost, vias = dijkstra(grid, routing_tree, target, 
                                          preferred_directions, direction_cost, via_cost)
             if path and total_cost < min_cost:
                 min_cost = total_cost
                 closest_pin = target
                 best_path = path
+                best_vias = vias
 
         if closest_pin is None:
-            return all_paths if all_paths else []
+            return all_paths if all_paths else [], all_vias
 
         all_paths.extend([cell for cell in best_path if cell not in routing_tree])
-        for cell in best_path:
+        all_vias.extend(best_vias)
+
+        for idx, cell in enumerate(best_path):
             routing_tree.add(cell)
-        
-        for l, r, c in best_path:
-            if (l, r, c) not in pins:
+            l, r, c = cell
+            # Only mark wire on the upper layer (layer 1) if the path is routed there
+            if l == 1 and (l, r, c) not in pins:
                 grid[l, r, c] = 1
-                
         unrouted_pins.remove(closest_pin)
+    # print(all_vias)
+    return all_paths, all_vias
 
-    return all_paths
-
-def lee_router(grid, pins ):
+def lee_router(grid, pins):
     """Wrapper for backward compatibility"""
     grid = np.array(grid)
-    preferred_direction='H'
     
     if len(grid.shape) == 3:
         if len(pins[0]) == 3:
@@ -197,11 +207,11 @@ def lee_router(grid, pins ):
             return lee_router_multi(grid, pins, direction_cost, via_cost)
         else:
             pins_3d = [(0, r, c) for r, c in pins]
-            paths_3d = lee_router_multi(grid, pins_3d, direction_cost, via_cost)
+            paths_3d, vias = lee_router_multi(grid, pins_3d, direction_cost, via_cost)
             return [(r, c) for l, r, c in paths_3d]
     else:
         pins_3d = [(0, r, c) for r, c in pins]
-        paths_3d = lee_router_multi(grid, pins_3d, direction_cost, via_cost)
+        paths_3d, vias = lee_router_multi(grid, pins_3d, direction_cost, via_cost)
         return [(r, c) for l, r, c in paths_3d]
     
     
