@@ -7,13 +7,12 @@ from Visualizer.utils import Utils
 from vispy.scene import SceneCanvas, visuals
 from vispy.visuals.transforms import STTransform
 
-from concurrent.futures import ThreadPoolExecutor
-import time
-
 CANVAS_SIZE = (1000, 1000)  # (width, height)
+IMAGE_SHAPE = (1000, 1000)
+
 COLORMAP_CHOICES = ["viridis", "hot", "grays", "reds", "blues"]
 LAYER_CHOICES = ["Layer 0", "Layer 1", "Combined"]
-TESTCASE_CHOICES = ["0", "1", "2", "3", "4", "5", "User Input"]
+TESTCASE_CHOICES = ["0", "1", "2", "3", "4", "User Input"]
 
 class MyMainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -78,14 +77,6 @@ class CanvasWrapper:
     _overlayed_image = None
     _chosen_cmap = COLORMAP_CHOICES[0]
 
-    _layer_0_vg = None
-    _layer_1_vg = None
-
-    executor = ThreadPoolExecutor(max_workers=2)
-    _routing_lock = False
-
-    _image_shape = (100,100)
-
     def __init__(self):
         self.canvas = SceneCanvas(size=CANVAS_SIZE)
         self.grid = self.canvas.central_widget.add_grid()
@@ -101,26 +92,17 @@ class CanvasWrapper:
             cmap=self._chosen_cmap,
             parent=self.view_top.scene,
         )
-
-        self.view_top.camera = "panzoom"
         self._pin_text_visuals = []
 
         self.funcWrapper.current_testcase = 0
         self.update_image()
 
-    def show_combined_view(self, pins):
-        self._image_shape = self._layer_0_vg.shape
-        self.clear_pins_text()
-        self.show_pins_text(pins)
-
-        #self.view_top.camera = "panzoom"
-        self.view_top.camera.set_range(x=(0, self._image_shape[1]), y=(0, self._image_shape[0]), margin=0)
-
-        self.image.set_data(self._layer_0_vg)
+    def show_combined_view(self, layer_0_vg, layer_1_vg, pins):
+        self.image.set_data(layer_0_vg)
         self.image.order = 0
 
         self._overlayed_image = visuals.Image(
-            self._layer_1_vg,
+            layer_1_vg,
             texture_format="auto",
             interpolation="nearest",
             cmap=self._chosen_cmap,
@@ -133,7 +115,6 @@ class CanvasWrapper:
         self._overlayed_image.set_gl_state('translucent', depth_test=False, cull_face=False, blend=True,
                                           blend_func=('src_alpha', 'one_minus_src_alpha'))
 
-<<<<<<< HEAD
         IMAGE_SHAPE = layer_0_vg.shape
         self.clear_pins_text()
         self.show_pins_text(pins)
@@ -144,40 +125,12 @@ class CanvasWrapper:
     def show_single_view(self, layer, pins):
         IMAGE_SHAPE = layer.shape
         self.image.set_data(layer)
-=======
-    def on_single_view_routing_complete_callback(self, future):
-        image_data = future.result()
-        self.funcWrapper.current_layer_displayed = self._active_layer
-        pins = self.funcWrapper.pins
-
-        self._image_shape = image_data.shape
->>>>>>> 23db01220b89b7d380cf6f8dd81ab374ced6cfd6
 
         self.clear_pins_text()
         self.show_pins_text(pins)
 
-        #self.view_top.camera = "panzoom"
-        self.view_top.camera.set_range(x=(0, self._image_shape[1]), y=(0, self._image_shape[0]), margin=0)
-
-        self.image.set_data(image_data)
-        self._routing_lock = False
-
-    def on_combined_view_routing_complete_callback(self, future, finish : bool, task_id :str):
-        print(task_id)
-        if not finish:
-            self._layer_0_vg = future.result()
-            pins =  self.funcWrapper.pins
-        else:
-            self._layer_1_vg = future.result()
-            pins =  self.funcWrapper.pins
-            self.show_combined_view(pins)
-
-        self._routing_lock = False
-
-    def show_single_view(self):
-        print("Main application: Submitting single view layer...")
-        future = self.executor.submit(self.funcWrapper.update_grid)
-        future.add_done_callback(lambda f: self.on_single_view_routing_complete_callback(f))
+        self.view_top.camera = "panzoom"
+        self.view_top.camera.set_range(x=(0, IMAGE_SHAPE[1]), y=(0, IMAGE_SHAPE[0]), margin=0)
 
     def update_image(self):
         if self._overlayed_image is not None:
@@ -190,7 +143,6 @@ class CanvasWrapper:
         # if it is Combined view get the two visual grids of our layers and pass it to show_combined view
         # Do not render if the grid is not multilayer and tries accessing other layer
         # Ideally we should lock the choices in the UI using QT but whatever this is Q&D
-<<<<<<< HEAD
         if self._active_layer == -1 and self.funcWrapper.multiLayer:
             visual_grid_3d = self.funcWrapper.update_grid_3d()
             pins = self.funcWrapper.pins
@@ -205,32 +157,6 @@ class CanvasWrapper:
                 visual_grid = self.funcWrapper.update_grid()
                 pins = self.funcWrapper.pins
                 self.show_single_view(visual_grid, pins)
-=======
-        if not self._routing_lock and self.funcWrapper.multiLayer:
-            self._routing_lock = True
-            if self._active_layer == -1:
-                print("Main application: Submitting Layer 0 Task")
-                self.funcWrapper.current_layer_displayed = 0
-                future_layer_0 = self.executor.submit(self.funcWrapper.update_grid)
-                future_layer_0.add_done_callback(lambda f: self.on_combined_view_routing_complete_callback(f, False, "Layer 0 done"))
-
-                print("Main application: Submitting Layer 1 Task")
-                self.funcWrapper.current_layer_displayed = 1
-                future_layer_1 = self.executor.submit(self.funcWrapper.update_grid)
-                future_layer_1.add_done_callback(lambda f: self.on_combined_view_routing_complete_callback(f, True, "Layer 1 done"))
-            else:
-                print("Main application: Submitting single view layer...")
-                self.funcWrapper.current_layer_displayed = self._active_layer
-                future = self.executor.submit(self.funcWrapper.update_grid)
-                future.add_done_callback(lambda f: self.on_single_view_routing_complete_callback(f))
-        elif not self._routing_lock:
-            self._routing_lock = True
-            print("Main application: Submitting single view layer...")
-            future = self.executor.submit(self.funcWrapper.update_grid)
-            future.add_done_callback(lambda f: self.on_single_view_routing_complete_callback(f))
-            #    return
-            #self.show_single_view()
->>>>>>> 23db01220b89b7d380cf6f8dd81ab374ced6cfd6
 
     def clear_pins_text(self):
         for visual in self._pin_text_visuals:
@@ -260,11 +186,6 @@ class CanvasWrapper:
         self.image.cmap = cmap_name
         if self._overlayed_image is not None:
             self._overlayed_image.cmap = cmap_name
-
-    def refresh_images(self):
-        self.image.update()
-        if self._overlayed_image is not None:
-            self._overlayed_image.update()
 
     def set_testcase_and_redraw(self, testcase_no: str):
         print(f"Changing test case to {testcase_no}")
