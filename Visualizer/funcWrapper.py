@@ -16,7 +16,6 @@ class FunctionalityWrapper:
     multiLayer = False
     current_layer_displayed = 0
 
-<<<<<<< HEAD
     def update_grid_3d(self):
         visual_grid_3d = np.array(self.grid, np.float32)
         logical_grid_3d = np.array(self.grid, np.float32)
@@ -39,10 +38,6 @@ class FunctionalityWrapper:
 
 
         return visual_grid_3d
-
-=======
-    asyn_task_done = False
->>>>>>> 23db01220b89b7d380cf6f8dd81ab374ced6cfd6
 
     def update_grid(self):
         visual_grid_3d = np.array(self.grid, np.float32)
