@@ -122,13 +122,9 @@ class CanvasWrapper:
         self.view_top.camera = "panzoom"
         self.view_top.camera.set_range(x=(0, IMAGE_SHAPE[1]), y=(0, IMAGE_SHAPE[0]), margin=0)
 
-    def show_single_view(self):
-        self.funcWrapper.current_layer_displayed = self._active_layer
-        image_data = self.funcWrapper.update_grid()
-        pins = self.funcWrapper.pins
-
-        IMAGE_SHAPE = image_data.shape
-        self.image.set_data(image_data)
+    def show_single_view(self, layer, pins):
+        IMAGE_SHAPE = layer.shape
+        self.image.set_data(layer)
 
         self.clear_pins_text()
         self.show_pins_text(pins)
@@ -148,18 +144,19 @@ class CanvasWrapper:
         # Do not render if the grid is not multilayer and tries accessing other layer
         # Ideally we should lock the choices in the UI using QT but whatever this is Q&D
         if self._active_layer == -1 and self.funcWrapper.multiLayer:
-            self.funcWrapper.current_layer_displayed = 0
-            layer_0_vg = self.funcWrapper.update_grid()
-            pins =  self.funcWrapper.pins
+            visual_grid_3d = self.funcWrapper.update_grid_3d()
+            pins = self.funcWrapper.pins
 
-            self.funcWrapper.current_layer_displayed = 1
-            layer_1_vg = self.funcWrapper.update_grid()
-
-            self.show_combined_view(layer_0_vg, layer_1_vg, pins)
+            self.show_combined_view(visual_grid_3d[0], visual_grid_3d[1], pins)
         else:
-            if not self.funcWrapper.multiLayer and self._active_layer != 0:
-                return
-            self.show_single_view()
+            if self.funcWrapper.multiLayer:
+                visual_grid_3d = self.funcWrapper.update_grid_3d()
+                pins = self.funcWrapper.pins
+                self.show_single_view(visual_grid_3d[self._active_layer], pins)
+            else:
+                visual_grid = self.funcWrapper.update_grid()
+                pins = self.funcWrapper.pins
+                self.show_single_view(visual_grid, pins)
 
     def clear_pins_text(self):
         for visual in self._pin_text_visuals:
@@ -168,12 +165,20 @@ class CanvasWrapper:
 
     def show_pins_text(self, pins):
         for i, pin in enumerate(pins):
-            r, c = pin
-            pin_text = visuals.Text(f'P{r},{c}', pos=(c+0.5, r+0.5), color='black',
-                                font_size=8, anchor_x='center', anchor_y='center',
-                                parent=self.view_top.scene)
-            pin_text.order = 1
-            self._pin_text_visuals.append(pin_text)
+            if len(pin) == 2:
+                r, c = pin
+                pin_text = visuals.Text(f'P{r},{c}', pos=(c+0.5, r+0.5), color='black',
+                                    font_size=8, anchor_x='center', anchor_y='center',
+                                    parent=self.view_top.scene)
+                pin_text.order = 1
+                self._pin_text_visuals.append(pin_text)
+            else:
+                l, x, y = pin
+                pin_text = visuals.Text(f'P{l},{x},{y}', pos=(y+0.5, x+0.5), color='black',
+                                    font_size=8, anchor_x='center', anchor_y='center',
+                                    parent=self.view_top.scene)
+                pin_text.order = 1
+                self._pin_text_visuals.append(pin_text)
 
     def set_image_colormap(self, cmap_name: str):
         print(f"Changing image colormap to {cmap_name}")

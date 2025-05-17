@@ -1,6 +1,6 @@
 import numpy as np
 import algorithm
-from algorithm import lee_router
+from algorithm import lee_router, lee_router_multi
 
 import file_handling
 from file_handling import input_file
@@ -15,6 +15,30 @@ class FunctionalityWrapper:
     current_testcase = 0
     multiLayer = False
     current_layer_displayed = 0
+
+    def update_grid_3d(self):
+        visual_grid_3d = np.array(self.grid, np.float32)
+        logical_grid_3d = np.array(self.grid, np.float32)
+
+        for net in self.nets:
+            path = np.array(lee_router_multi(logical_grid_3d, net), np.float32)
+            # obstacles
+            visual_grid_3d[visual_grid_3d == -1] = 64
+
+            # path
+            for x, y, z in path.astype(int):
+                visual_grid_3d[x, y, z] = 320
+                logical_grid_3d[x, y, z] = -1
+
+            # pins
+            for x, y, z in net:
+                logical_grid_3d[x, y, z] = -1
+                visual_grid_3d[x, y, z] = 512
+                self.pins.append((x, y, z))
+
+
+        return visual_grid_3d
+
 
     def update_grid(self):
         visual_grid_3d = np.array(self.grid, np.float32)
