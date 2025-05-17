@@ -1,6 +1,7 @@
-def input_file(filename, num_grids=2):
+def input_file(filename):
     obs = []
     nets = []
+    multiLayer = False
 
     with open(filename, "r") as file:
         lines = file.readlines()
@@ -12,6 +13,7 @@ def input_file(filename, num_grids=2):
         if x.upper().startswith("OBS"):
             y = x.strip().split('OBS')[-1]
             tup = eval(y)
+
             obs.append(tup)
 
     # Extract nets
@@ -20,10 +22,22 @@ def input_file(filename, num_grids=2):
             z = z.strip()
             tuples = z.split(' ', 1)
             sub_net = tuples[1]
+
+
             list_of_tuples = eval(f'[{sub_net}]')
+
+            # AW: if we find a tup that is on the second layer
+            # we know this is a multi-layered test
+            if not multiLayer:
+                for tup in list_of_tuples:
+                    if tup[0] == 1:
+                        multiLayer = True
+
             nets.append(list_of_tuples)
 
     grids = []
+    num_grids = 2 if multiLayer else 1
+
     for _ in range(num_grids):
         grids.append([[0] * cols for _ in range(rows)])
 

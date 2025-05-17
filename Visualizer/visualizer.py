@@ -2,6 +2,7 @@ import numpy as np
 from PyQt6 import QtWidgets
 
 from Visualizer.funcWrapper import FunctionalityWrapper
+from Visualizer.utils import Utils
 
 from vispy.scene import SceneCanvas, visuals
 from vispy.visuals.transforms import STTransform
@@ -11,7 +12,7 @@ IMAGE_SHAPE = (1000, 1000)
 
 COLORMAP_CHOICES = ["viridis", "hot", "grays", "reds", "blues"]
 LAYER_CHOICES = ["Layer 0", "Layer 1", "Combined"]
-TESTCASE_CHOICES = ["0", "1", "2", "3", "4"]
+TESTCASE_CHOICES = ["0", "1", "2", "3", "4", "User Input"]
 
 class MyMainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -83,8 +84,6 @@ class CanvasWrapper:
 
         self.funcWrapper = FunctionalityWrapper()
 
-
-
         initial_data = np.zeros((1, 1), dtype=np.float32) # placeholder
         self.image = visuals.Image(
             initial_data,
@@ -123,13 +122,9 @@ class CanvasWrapper:
         self.view_top.camera = "panzoom"
         self.view_top.camera.set_range(x=(0, IMAGE_SHAPE[1]), y=(0, IMAGE_SHAPE[0]), margin=0)
 
-    def show_single_view(self):
-        self.funcWrapper.current_layer_displayed = self._active_layer
-        image_data = self.funcWrapper.update_grid()
-        pins = self.funcWrapper.pins
-
-        IMAGE_SHAPE = image_data.shape
-        self.image.set_data(image_data)
+    def show_single_view(self, layer, pins):
+        IMAGE_SHAPE = layer.shape
+        self.image.set_data(layer)
 
         self.clear_pins_text()
         self.show_pins_text(pins)
@@ -149,18 +144,19 @@ class CanvasWrapper:
         # Do not render if the grid is not multilayer and tries accessing other layer
         # Ideally we should lock the choices in the UI using QT but whatever this is Q&D
         if self._active_layer == -1 and self.funcWrapper.multiLayer:
-            self.funcWrapper.current_layer_displayed = 0
-            layer_0_vg = self.funcWrapper.update_grid()
-            pins =  self.funcWrapper.pins
+            visual_grid_3d = self.funcWrapper.update_grid_3d()
+            pins = self.funcWrapper.pins
 
-            self.funcWrapper.current_layer_displayed = 1
-            layer_1_vg = self.funcWrapper.update_grid()
-
-            self.show_combined_view(layer_0_vg, layer_1_vg, pins)
+            self.show_combined_view(visual_grid_3d[0], visual_grid_3d[1], pins)
         else:
-            if not self.funcWrapper.multiLayer and self._active_layer != 0:
-                return
-            self.show_single_view()
+            if self.funcWrapper.multiLayer:
+                visual_grid_3d = self.funcWrapper.update_grid_3d()
+                pins = self.funcWrapper.pins
+                self.show_single_view(visual_grid_3d[self._active_layer], pins)
+            else:
+                visual_grid = self.funcWrapper.update_grid()
+                pins = self.funcWrapper.pins
+                self.show_single_view(visual_grid, pins)
 
     def clear_pins_text(self):
         for visual in self._pin_text_visuals:
@@ -169,12 +165,20 @@ class CanvasWrapper:
 
     def show_pins_text(self, pins):
         for i, pin in enumerate(pins):
-            r, c = pin
-            pin_text = visuals.Text(f'P{r},{c}', pos=(c+0.5, r+0.5), color='black',
-                                font_size=8, anchor_x='center', anchor_y='center',
-                                parent=self.view_top.scene)
-            pin_text.order = 1
-            self._pin_text_visuals.append(pin_text)
+            if len(pin) == 2:
+                r, c = pin
+                pin_text = visuals.Text(f'P{r},{c}', pos=(c+0.5, r+0.5), color='black',
+                                    font_size=8, anchor_x='center', anchor_y='center',
+                                    parent=self.view_top.scene)
+                pin_text.order = 1
+                self._pin_text_visuals.append(pin_text)
+            else:
+                l, x, y = pin
+                pin_text = visuals.Text(f'P{l},{x},{y}', pos=(y+0.5, x+0.5), color='black',
+                                    font_size=8, anchor_x='center', anchor_y='center',
+                                    parent=self.view_top.scene)
+                pin_text.order = 1
+                self._pin_text_visuals.append(pin_text)
 
     def set_image_colormap(self, cmap_name: str):
         print(f"Changing image colormap to {cmap_name}")
@@ -185,29 +189,13 @@ class CanvasWrapper:
 
     def set_testcase_and_redraw(self, testcase_no: str):
         print(f"Changing test case to {testcase_no}")
-        self.funcWrapper.current_testcase = int(testcase_no)
+        self.funcWrapper.current_testcase = Utils.testcase_name_to_int(testcase_no)
         self.update_image()
 
     def set_active_layer_and_redraw(self, layer_name: str):
         print(f"Changing active layer to {layer_name}")
-        self._active_layer = CanvasWrapper.layer_name_to_int(layer_name)
+        self._active_layer = Utils.layer_name_to_int(layer_name)
         self.update_image()
-
-    # AW: TODO: move this to a util/lib Class
-    @staticmethod
-    def layer_name_to_int(layer_name : str):
-        match layer_name:
-            case "Layer 0":
-                return 0
-
-            case "Layer 1":
-                return 1
-
-            case "Combined":
-                return -1
-
-            case _:
-                return 0
 
     def on_mouse_move(self, event, label):
         scene_coords = self.view_top.scene.transform.imap(event.pos)
