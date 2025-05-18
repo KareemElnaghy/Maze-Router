@@ -21,7 +21,8 @@ class FunctionalityWrapper:
         logical_grid_3d = np.array(self.grid, np.float32)
 
         for net in self.nets:
-            path = np.array(lee_router_multi(logical_grid_3d, net), np.float32)
+            all_paths, all_vias = lee_router_multi(logical_grid_3d, net)
+            path = np.array(all_paths, np.float32)
             # obstacles
             visual_grid_3d[visual_grid_3d == -1] = 64
 
