@@ -18,14 +18,16 @@ def get_source_pin(pins, rows, cols):
 
     for pin in pins:
         for corner in corners:
-            # Manhattan distance to corner (ignoring layer)
+            # Manhattan distance to corner
             distance = abs(pin[1] - corner[1]) + abs(pin[2] - corner[2])
             if distance < min_distance:
                 min_distance = distance
                 closest_pin = pin
+    
+    print(f"Selected source pin: {closest_pin} with distance {min_distance}")
     return closest_pin
 
-# runs dijkstra's algorithm
+# runs dijkstra's algorithm C123
 def dijkstra(grid, routing_tree, target, preferred_directions, direction_cost, via_cost):
     """Dijkstra for 3D grid with layers"""
     layers, rows, cols = grid.shape
@@ -119,6 +121,8 @@ def lee_router_multi(grid, pins, direction_cost=3, via_cost=5):
     """Multi-layer Lee router implementation"""
     if len(pins) <= 1:
         return []
+    
+    print(f"Pins: {pins}")
 
     grid = np.array(grid)
     
@@ -194,7 +198,8 @@ def lee_router_multi(grid, pins, direction_cost=3, via_cost=5):
             if l == 1 and (l, r, c) not in pins:
                 grid[l, r, c] = 1
         unrouted_pins.remove(closest_pin)
-    # print(all_vias)
+    print(f"Vias {all_vias}")
+    print(f"paths: {all_paths}")
     return all_paths, all_vias
 
 def lee_router(grid, pins):
@@ -213,5 +218,4 @@ def lee_router(grid, pins):
         pins_3d = [(0, r, c) for r, c in pins]
         paths_3d, vias = lee_router_multi(grid, pins_3d, direction_cost, via_cost)
         return [(r, c) for l, r, c in paths_3d]
-    
     
