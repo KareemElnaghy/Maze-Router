@@ -11,15 +11,19 @@ via_cost=20
 # starts from the first metal layer
 def get_source_pin(pins, rows, cols):
     """Find starting pin closest to any corner"""
-    corners = [(0, 0, 0), (0,0, cols-1), (0,rows-1, 0), (0,rows-1, cols-1),
-               (1, 0, 0), (1,0, cols-1), (1,rows-1, 0), (1,rows-1, cols-1)]
+    corners_m1 = [(0, 0, 0), (0,0, cols-1), (0,rows-1, 0), (0,rows-1, cols-1)]
+    corners_m2 = [(1, 0, 0), (1,0, cols-1), (1,rows-1, 0), (1,rows-1, cols-1)]
+    corners = corners_m1 + corners_m2
     closest_pin = pins[0]
     min_distance = float('inf')
 
     for pin in pins:
         for corner in corners:
             # Manhattan distance to corner (ignoring layer)
-            distance = abs(pin[1] - corner[1]) + abs(pin[2] - corner[2])
+            if pin[0] == 0 and corner[0] == 0:
+                distance = abs(pin[1] - corner[1]) + abs(pin[2] - corner[2])
+            elif pin[0] == 1 and corner[0] == 1:
+                distance = abs(pin[1] - corner[1]) + abs(pin[2] - corner[2])
             if distance < min_distance:
                 min_distance = distance
                 closest_pin = pin
