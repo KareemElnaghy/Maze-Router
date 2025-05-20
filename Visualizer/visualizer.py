@@ -203,7 +203,7 @@ class CanvasWrapper:
     def show_pins_text(self, pins):
         for i, via in enumerate(self.funcWrapper.vias):
             x, y = via
-            via_text = visuals.Text(f'V{x},{y}', pos=(y+0.5, x+0.8), color='#080843',
+            via_text = visuals.Text(f'V{y},{x}', pos=(y+0.5, x+0.8), color='#080843',
                                 font_size=8, anchor_x='center', anchor_y='center',
                                 parent=self.view_top.scene)
             via_text.order = 1
@@ -211,7 +211,7 @@ class CanvasWrapper:
 
         for i, pin in enumerate(pins):
             l, x, y = pin
-            pin_text = visuals.Text(f'P{l},{x},{y}', pos=(y+0.5, x+0.5), color='black',
+            pin_text = visuals.Text(f'P{l},{y},{x}', pos=(y+0.5, x+0.5), color='black',
                                 font_size=8, anchor_x='center', anchor_y='center',
                                 parent=self.view_top.scene)
             pin_text.order = 1
@@ -250,7 +250,7 @@ class CanvasWrapper:
         elif self._active_layer == "Layer 1":
             layer_info = " (Layer 1)"
 
-        label.setText(f"Grid X: {grid_x}, Grid Y: {grid_y}{layer_info}")
+        label.setText(f"Grid X: {grid_y}, Grid Y: {grid_x}{layer_info}")
 
     def on_mouse_press(self, event):
         scene_coords = self.view_top.scene.transform.imap(event.pos)
