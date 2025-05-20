@@ -36,9 +36,10 @@ The input file should define the grid dimensions, obstacles, and nets in the fol
 
 ### Example Input File
 '''5x5'''
-'''OBS(1, 1)'''
-'''OBS(2, 2)'''
-NET (0, 0), (4, 4)
+OBS(1, 1)
+OBS(2, 2)
+NET (0, 0), (4, 4)'''
+
 ### Explanation
 - `5x5`: Defines a grid with 5 rows and 5 columns.
 - `OBS(1, 1)`: Places an obstacle at row 1, column 1.
