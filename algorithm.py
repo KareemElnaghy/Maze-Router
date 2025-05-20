@@ -136,6 +136,7 @@ def lee_router_multi(grid, pins, direction_cost=3, via_cost=5):
     if len(pins) <= 1:
         return []
     
+   # validate pins here
     validate_pins(grid, pins)
 
     grid = np.array(grid)
@@ -161,29 +162,11 @@ def lee_router_multi(grid, pins, direction_cost=3, via_cost=5):
         elif l == 1:
             preferred_directions.append('V')  # Layer 1: Vertical
     
-    # Validate pins - FIXED THIS PART
-    for pin in pins:
-        l, r, c = pin
-        # Check if pin is within bounds
-        if not (0 <= l < layers and 0 <= r < rows and 0 <= c < cols):
-            print(f"Warning: Pin {pin} is out of bounds. Grid shape: {grid.shape}")
-            raise ValueError(f"Pin {pin} is outside valid grid range ({layers}×{rows}×{cols})")
-            
-        if grid[l, r, c] == -1:
-            print(f"Warning: Pin {pin} is on an obstacle")
-            raise ValueError(f"Pin {pin} is on an obstacle")
-    
     source_pin = get_source_pin(pins, rows, cols)
     routing_tree = set([source_pin])
     all_paths = []
     all_vias = []
     unrouted_pins = set(pins) - {source_pin}
-
-    # Validate pins
-    for pin in pins:
-        l, r, c = pin
-        if not (0 <= l < layers and 0 <= r < rows and 0 <= c < cols) or grid[l, r, c] == -1:
-            raise ValueError(f"Pin {pin} is invalid or on an obstacle.")
 
     while unrouted_pins:
         closest_pin = None

@@ -15,7 +15,7 @@ def input_file(filename):
             tup = eval(y)
 
             obs.append((tup[1], tup[0]))
-
+    
     # Extract nets
     for z in lines[1:]:
         if z.lower().startswith('net'):
