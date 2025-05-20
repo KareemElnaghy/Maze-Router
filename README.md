@@ -26,6 +26,36 @@
 
 ---
 
+## Input File Format
+
+The input file should define the grid dimensions, obstacles, and nets in the following format:
+
+1. **Grid Dimensions**: Specified on the first line in the format `rows x cols` (e.g., `5x5`).
+2. **Obstacles**: Listed as `OBS(x, y)` for single-layer grids or `OBS(x, y, layer)` for multi-layer grids.
+3. **Nets**: Defined as `NET (x1, y1), (x2, y2), ...` to specify the pins to be connected.
+
+### Example Input File
+5x5 
+OBS(1, 1) 
+OBS(2, 2) 
+NET (0, 0), (4, 4)
+### Explanation
+- `5x5`: Defines a grid with 5 rows and 5 columns.
+- `OBS(1, 1)`: Places an obstacle at row 1, column 1.
+- `OBS(2, 2)`: Places an obstacle at row 2, column 2.
+- `NET (0, 0), (4, 4)`: Specifies a net connecting the pins at `(0, 0)` and `(4, 4)`.
+
+For multi-layer grids, obstacles and nets can include a layer index:
+5x5 
+OBS(1, 1, 0) 
+OBS(2, 2, 1) 
+NET (0, 0, 0), (4, 4, 1)
+
+### Notes
+- Obstacles and pins must be within the grid bounds.
+- Multi-layer grids assume two layers by default, with alternating horizontal and vertical preferred directions.
+- Input files must be correctly formatted to avoid parsing errors.
+
 ## Setting up dev environment
 
 
