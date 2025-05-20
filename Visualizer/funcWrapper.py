@@ -17,6 +17,8 @@ class FunctionalityWrapper:
     current_testcase = 0
     multiLayer = False
     current_layer_displayed = 0
+    non_preferred_cost = 10
+    via_cost = 50
 
     #def get_via_locations:
 
@@ -27,13 +29,12 @@ class FunctionalityWrapper:
         logical_grid_3d = np.array(self.grid, np.float32)
 
         for net in self.nets:
-            all_paths, all_vias = lee_router(logical_grid_3d, net)
-            #print(all_vias)
-            print("PATH")
-            print(all_paths)
+            all_paths, all_vias = lee_router(logical_grid_3d, net, self.non_preferred_cost, self.via_cost)
+            # print("PATH")
+            # print(all_paths)
 
-            print("VIAS")
-            print(all_vias)
+            # print("VIAS")
+            # print(all_vias)
             path = np.array(all_paths, np.float32)
             vias = np.array(all_vias, np.float32)
 
@@ -62,8 +63,8 @@ class FunctionalityWrapper:
 
 
 
-            print("VISGIRD")
-            print(visual_grid_3d)
+            # print("VISGIRD")
+            # print(visual_grid_3d)
 
 
         return visual_grid_3d
@@ -77,7 +78,7 @@ class FunctionalityWrapper:
         filtered_nets = self.filter_nets_by_layer()
 
         for net in filtered_nets:
-            path = np.array(lee_router(logical_grid, net), np.float32)
+            path = np.array(lee_router(logical_grid, net, self.non_preferred_cost, self.via_cost), np.float32)
 
             #obstacles
             visual_grid[visual_grid == -1] = 64
@@ -213,18 +214,34 @@ class FunctionalityWrapper:
             case -1:
                 if len(sys.argv) > 1:
                     user_file = sys.argv[1]
-                    multi =  sys.argv[2]
+                    non_preferred_cost = int(sys.argv[2]) if len(sys.argv) > 2 else 2
+                    via_cost = int(sys.argv[3]) if len(sys.argv) > 3 else 10
+                    multi = True  # Always default to True
+
                     self.grid, self.nets = input_file(user_file)
+                    self.non_preferred_cost = non_preferred_cost
+                    self.via_cost = via_cost
                     self.multiLayer = multi
+                    with open(f"output_case{self.current_testcase}.txt", "w") as f:
+                        for i, net in enumerate(self.nets):
+                            line = f"net{i+1}"  
+                            for pin in net:
+                                line += f" ({pin[0]}, {pin[1]}, {pin[2]})"
+                            f.write(line + "\n")
                 else:
                     self.grid, self.nets = input_file('Testcases/case0.txt')
-                    self.multiLayer = False
-                with open(f"output_case{self.current_testcase}.txt", "w") as f:
-                    for i, net in enumerate(self.nets):
-                        line = f"net{i+1}"  
-                        for pin in net:
-                            line += f" ({pin[0]}, {pin[1]}, {pin[2]})"
-                        f.write(line + "\n")
+                    self.non_preferred_cost = 2
+                    self.via_cost = 10
+                    self.multiLayer = True
+                    with open(f"output_case{self.current_testcase}.txt", "w") as f:
+                        for i, net in enumerate(self.nets):
+                            line = f"net{i+1}"  
+                            for pin in net:
+                                line += f" ({pin[0]}, {pin[1]}, {pin[2]})"
+                            f.write(line + "\n")
+
+                print(f"Non-preferred cost: {self.non_preferred_cost}")
+                print(f"Via cost: {self.via_cost}")
 
 
 

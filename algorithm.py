@@ -4,8 +4,6 @@ from pstats import SortKey
 from collections import deque
 import heapq
 
-direction_cost=2
-via_cost=20
 
 # selects the source pin based on distance from the corner (x and y distance following manhattan routing)
 # starts from the first metal layer
@@ -198,7 +196,7 @@ def lee_router_multi(grid, pins, direction_cost=3, via_cost=5):
     # print(all_vias)
     return all_paths, all_vias
 
-def lee_router(grid, pins):
+def lee_router(grid, pins, direction_cost=10, via_cost=50):
     """Wrapper for backward compatibility"""
     grid = np.array(grid)
 
