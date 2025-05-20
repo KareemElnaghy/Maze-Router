@@ -1,5 +1,31 @@
 # Maze-Router
 
+## Features
+- **Multi-Layer Routing**: Supports single and multi-layer grids for increased flexibility.
+- **Pathfinding Algorithms**: Implements Lee's algorithm for guaranteed shortest pathfinding.
+- **File Handling**: Parses input files to extract grid dimensions, obstacles, and net connections.
+- **Visualization**: Provides an interactive GUI using `vispy` to visualize routing paths and obstacles.
+
+---
+
+## Assumptions
+1. Input files are formatted correctly with grid dimensions, obstacles, and net connections.
+2. Obstacles and pins are within the bounds of the grid.
+3. Multi-layer routing assumes two layers, with alternating horizontal and vertical preferred directions.
+4. The grid is rectangular, and dimensions are specified in the format `rows x cols`.
+5. Obstacles are static and do not change during routing.
+
+---
+
+## Limitations
+1. **Scalability**: Performance may degrade for very large grids or a high number of nets.
+2. **Algorithm Constraints**: Lee's algorithm is computationally expensive for large grids due to its exhaustive search nature.
+3. **Visualization**: The visualizer may encounter issues on systems with incompatible OpenGL or Wayland configurations.
+4. **Input Validation**: Limited error handling for malformed input files.
+5. **Multi-Layer Routing**: Currently supports only two layers; additional layers would require further implementation.
+
+---
+
 ## Setting up dev environment
 
 
@@ -102,3 +128,4 @@ Or
 ```bash
 python3 main.py input_file.txt False
 ```
+
