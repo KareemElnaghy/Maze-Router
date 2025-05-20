@@ -1,6 +1,6 @@
 import numpy as np
 import algorithm
-from algorithm import lee_router, lee_router_multi
+from algorithm import lee_router
 
 import file_handling
 from file_handling import input_file
@@ -27,7 +27,7 @@ class FunctionalityWrapper:
         logical_grid_3d = np.array(self.grid, np.float32)
 
         for net in self.nets:
-            all_paths, all_vias = lee_router_multi(logical_grid_3d, net, 20, 3)
+            all_paths, all_vias = lee_router(logical_grid_3d, net)
             #print(all_vias)
             print("PATH")
             print(all_paths)
@@ -108,6 +108,7 @@ class FunctionalityWrapper:
 
         return result
 
+    # BONUS
     def net_reordering(self):
         # Reorder nets based on the number of pins within their bounding box
         net_pin_counts = []
