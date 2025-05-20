@@ -40,13 +40,8 @@ def input_file(filename):
         grids.append([[0] * cols for _ in range(rows)])
 
     if num_grids == 2:
-        half = len(obs) // 2
-        obs1 = obs[:half]
-        obs2 = obs[half:]
-
-        for x, y in obs1:
+        for x, y in obs:
             grids[0][x][y] = -1
-        for x, y in obs2:
             grids[1][x][y] = -1
     elif num_grids == 1:
         for x, y in obs:
