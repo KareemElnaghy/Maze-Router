@@ -35,11 +35,11 @@ The input file should define the grid dimensions, obstacles, and nets in the fol
 3. **Nets**: Defined as `NET (x1, y1), (x2, y2), ...` to specify the pins to be connected.
 
 ### Example Input File
-\'''5x5
+5x5
 OBS(1, 1)
 OBS(2, 2)
 NET (0, 0), (4, 4)
-\'''
+
 
 ### Explanation
 - `5x5`: Defines a grid with 5 rows and 5 columns.
@@ -57,6 +57,14 @@ NET (0, 0, 0), (4, 4, 1)
 - Obstacles and pins must be within the grid bounds.
 - Multi-layer grids assume two layers by default, with alternating horizontal and vertical preferred directions.
 - Input files must be correctly formatted to avoid parsing errors.
+
+---
+
+### _Future Enhancements_
+1- Add support for more than two layers.
+2- Optimize Lee's algorithm for better performance on large grids.
+3- Improve error handling and input validation.
+4- Enhance the visualizer with more customization options.
 
 ## Setting up dev environment
 
