@@ -81,6 +81,29 @@ class FunctionalityWrapper:
 
         return result
 
+    def net_reordering(self):
+        # Reorder nets based on the number of pins within their bounding box
+        net_pin_counts = []
+        all_pins = [pin for net in self.nets for pin in net]
+
+        for net in self.nets:
+            min_x = min(pin[1] for pin in net)
+            max_x = max(pin[1] for pin in net)
+            min_y = min(pin[2] for pin in net)
+            max_y = max(pin[2] for pin in net)
+
+            count = 0
+            for pin in all_pins:
+                x, y = pin[1], pin[2]
+                if min_x < x < max_x and min_y < y < max_y:
+                    count += 1
+
+            net_pin_counts.append((net, count))
+
+        net_pin_counts.sort(key=lambda x: x[1])
+
+        self.nets = [net for net, count in net_pin_counts]
+
     def init_testcase(self):
         self.pins = []
         
@@ -144,4 +167,7 @@ class FunctionalityWrapper:
             case _:
                 self.grid, self.nets = input_file('Testcases/case4.txt')
                 self.multiLayer = True
+
+        # call net reordering heuristic after loading the test case
+        self.net_reordering()
  
