@@ -31,6 +31,16 @@ def get_source_pin(pins, rows, cols):
                 closest_pin = pin
     return closest_pin
 
+def validate_pins(grid, pins):
+    grid = np.array(grid)
+    layers, rows, cols = grid.shape
+    for pin in pins:
+        l, r, c = pin
+        if not (0 <= l < layers and 0 <= r < rows and 0 <= c < cols):
+            raise ValueError(f"Pin {pin} is out of bounds")
+        if grid[l, r, c] == -1:
+            raise ValueError(f"Pin {pin} is located on an obstacle.")
+        
 # runs dijkstra's algorithm
 def dijkstra(grid, routing_tree, target, preferred_directions, direction_cost, via_cost):
     """Dijkstra for 3D grid with layers"""
@@ -125,6 +135,8 @@ def lee_router_multi(grid, pins, direction_cost=3, via_cost=5):
     """Multi-layer Lee router implementation"""
     if len(pins) <= 1:
         return []
+    
+    validate_pins(grid, pins)
 
     grid = np.array(grid)
     
@@ -206,6 +218,8 @@ def lee_router_multi(grid, pins, direction_cost=3, via_cost=5):
 def lee_router(grid, pins):
     """Wrapper for backward compatibility"""
     grid = np.array(grid)
+
+    validate_pins(grid, pins)
     
     if len(grid.shape) == 3:
         if len(pins[0]) == 3:
