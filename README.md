@@ -1,5 +1,61 @@
 # Maze-Router
 
+## _Features_
+- **Multi-Layer Routing**: Supports single and multi-layer grids for increased flexibility.
+- **Pathfinding Algorithms**: Implements Lee's algorithm for guaranteed shortest pathfinding.
+- **File Handling**: Parses input files to extract grid dimensions, obstacles, and net connections.
+- **Visualization**: Provides an interactive GUI using `vispy` to visualize routing paths and obstacles.
+
+---
+
+## Assumptions
+1. Input files are formatted correctly with grid dimensions, obstacles, and net connections.
+2. Obstacles and pins are within the bounds of the grid.
+3. Multi-layer routing assumes two layers, with alternating horizontal and vertical preferred directions.
+4. The grid is rectangular, and dimensions are specified in the format `rows x cols`.
+5. Obstacles are static and do not change during routing.
+
+---
+
+## Limitations
+1. **Scalability**: Performance may degrade for very large grids or a high number of nets.
+2. **Algorithm Constraints**: Lee's algorithm is computationally expensive for large grids due to its exhaustive search nature.
+3. **Visualization**: The visualizer may encounter issues on systems with incompatible OpenGL or Wayland configurations.
+4. **Input Validation**: Limited error handling for malformed input files.
+5. **Multi-Layer Routing**: Currently supports only two layers; additional layers would require further implementation.
+
+---
+
+## Input File Format
+
+The input file should define the grid dimensions, obstacles, and nets in the following format:
+
+1. **Grid Dimensions**: Specified on the first line in the format `rows x cols` (e.g., `5x5`).
+2. **Obstacles**: Listed as `OBS(x, y)` for single-layer grids or `OBS(x, y, layer)` for multi-layer grids.
+3. **Nets**: Defined as `NET (x1, y1), (x2, y2), ...` to specify the pins to be connected.
+
+### Example Input File
+5x5 
+OBS(1, 1) 
+OBS(2, 2) 
+NET (0, 0), (4, 4)
+### Explanation
+- `5x5`: Defines a grid with 5 rows and 5 columns.
+- `OBS(1, 1)`: Places an obstacle at row 1, column 1.
+- `OBS(2, 2)`: Places an obstacle at row 2, column 2.
+- `NET (0, 0), (4, 4)`: Specifies a net connecting the pins at `(0, 0)` and `(4, 4)`.
+
+For multi-layer grids, obstacles and nets can include a layer index:
+5x5 
+OBS(1, 1, 0) 
+OBS(2, 2, 1) 
+NET (0, 0, 0), (4, 4, 1)
+
+### Notes
+- Obstacles and pins must be within the grid bounds.
+- Multi-layer grids assume two layers by default, with alternating horizontal and vertical preferred directions.
+- Input files must be correctly formatted to avoid parsing errors.
+
 ## Setting up dev environment
 
 
@@ -102,3 +158,4 @@ Or
 ```bash
 python3 main.py input_file.txt False
 ```
+
