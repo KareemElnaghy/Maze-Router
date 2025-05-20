@@ -26,8 +26,6 @@ def input_file(filename):
 
             list_of_tuples = eval(f'[{sub_net}]')
 
-            # AW: if we find a tup that is on the second layer
-            # we know this is a multi-layered test
             if not multiLayer:
                 for tup in list_of_tuples:
                     if tup[0] == 1:
