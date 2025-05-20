@@ -35,7 +35,7 @@ The input file should define the grid dimensions, obstacles, and nets in the fol
 3. **Nets**: Defined as `NET (x1, y1), (x2, y2), ...` to specify the pins to be connected.
 
 ### Example Input File
-'''5x5'''
+'''5x5
 OBS(1, 1)
 OBS(2, 2)
 NET (0, 0), (4, 4)'''
