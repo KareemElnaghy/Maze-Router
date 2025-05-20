@@ -4,6 +4,7 @@ from algorithm import lee_router, lee_router_multi
 
 import file_handling
 from file_handling import input_file
+import sys
 
 class FunctionalityWrapper:
     pins = []
@@ -81,6 +82,7 @@ class FunctionalityWrapper:
 
     def init_testcase(self):
         self.pins = []
+        
         match self.current_testcase:
             case 0:
                 self.grid, self.nets = input_file('Testcases/case0.txt')
@@ -125,11 +127,20 @@ class FunctionalityWrapper:
 
                 self.grid = [grid_layer_0, grid_layer_1]
 
-            # user inputted testcase file
             case -1:
-                self.grid, self.nets = input_file('Testcases/user_input_case.txt')
-                self.multiLayer = True
+                if len(sys.argv) > 1:
+                    user_file = sys.argv[1]
+                    multi =  sys.argv[2]
+                    self.grid, self.nets = input_file(user_file)
+                    self.multiLayer = multi
+                else:
+                    self.grid, self.nets = input_file('Testcases/case0.txt')
+                    self.multiLayer = False
+                # self.grid, self.nets = input_file('Testcases/case3.txt')
+                # self.multiLayer = False
+
 
             case _:
                 self.grid, self.nets = input_file('Testcases/case4.txt')
                 self.multiLayer = True
+ 
