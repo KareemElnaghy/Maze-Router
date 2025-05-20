@@ -1,7 +1,7 @@
 def input_file(filename):
     obs = []
     nets = []
-    multiLayer = False
+    multiLayer = True
 
     with open(filename, "r") as file:
         lines = file.readlines()
@@ -26,10 +26,10 @@ def input_file(filename):
 
             list_of_tuples = eval(f'[{sub_net}]')
 
-            if not multiLayer:
-                for tup in list_of_tuples:
-                    if tup[0] == 1:
-                        multiLayer = True
+            #if not multiLayer:
+            #    for tup in list_of_tuples:
+            #        if tup[0] == 1:
+            #            multiLayer = True
 
             nets.append(list_of_tuples)
 

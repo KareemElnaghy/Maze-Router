@@ -8,7 +8,6 @@ from vispy.scene import SceneCanvas, visuals
 from vispy.visuals.transforms import STTransform
 
 CANVAS_SIZE = (1000, 1000)  # (width, height)
-IMAGE_SHAPE = (1000, 1000)
 
 COLORMAP_CHOICES = ["viridis", "hot", "grays", "reds", "blues"]
 LAYER_CHOICES = ["Layer 0", "Layer 1", "Combined"]
@@ -42,6 +41,7 @@ class MyMainWindow(QtWidgets.QMainWindow):
         self._controls.colormap_chooser.currentTextChanged.connect(self._canvas_wrapper.set_image_colormap)
         self._controls.testcase_chooser.currentTextChanged.connect(self._canvas_wrapper.set_testcase_and_redraw)
         self._controls.layer_chooser.currentTextChanged.connect(self._canvas_wrapper.set_active_layer_and_redraw)
+        self._controls.grid_checkbox.stateChanged.connect(self._canvas_wrapper.toggle_grid_visibility)
 
 class Controls(QtWidgets.QWidget):
     def __init__(self, parent=None):
@@ -65,6 +65,10 @@ class Controls(QtWidgets.QWidget):
         self.layer_chooser.addItems(LAYER_CHOICES)
         layout.addWidget(self.layer_chooser)
 
+        self.grid_checkbox = QtWidgets.QCheckBox("Show Grid Lines")
+        self.grid_checkbox.setChecked(False)
+        layout.addWidget(self.grid_checkbox)
+
         self.coord_label = QtWidgets.QLabel()
         layout.addWidget(self.coord_label)
 
@@ -76,6 +80,8 @@ class CanvasWrapper:
     _active_layer : int = 0
     _overlayed_image = None
     _chosen_cmap = COLORMAP_CHOICES[0]
+    _show_grid = True
+    _image_shape = (10,10)
 
     def __init__(self):
         self.canvas = SceneCanvas(size=CANVAS_SIZE)
@@ -93,9 +99,43 @@ class CanvasWrapper:
             parent=self.view_top.scene,
         )
         self._pin_text_visuals = []
+        self._grid_lines = []
 
         self.funcWrapper.current_testcase = 0
         self.update_image()
+
+    def toggle_grid_visibility(self, state):
+        self._show_grid = bool(state)
+        visual_grid_3d = self.funcWrapper.update_grid_3d()
+        shape = visual_grid_3d[0].shape
+        self.create_grid_lines(shape)
+
+    def create_grid_lines(self, shape):
+        height, width = shape
+
+        # Remove old grid lines
+        for line in self._grid_lines:
+            line.parent = None
+        self._grid_lines = []
+
+        if not self._show_grid:
+            return
+
+        # Create vertical grid lines
+        for i in range(width + 1):
+            line = visuals.Line(pos=np.array([[i, 0], [i, height]]),
+                               color='white',
+                               parent=self.view_top.scene)
+            line.order = -1  # Draw above images
+            self._grid_lines.append(line)
+
+        # Create horizontal grid lines
+        for i in range(height + 1):
+            line = visuals.Line(pos=np.array([[0, i], [width, i]]),
+                               color='white',
+                               parent=self.view_top.scene)
+            line.order = -1
+            self._grid_lines.append(line)
 
     def show_combined_view(self, layer_0_vg, layer_1_vg, pins):
         self.image.set_data(layer_0_vg)
@@ -115,22 +155,24 @@ class CanvasWrapper:
         self._overlayed_image.set_gl_state('translucent', depth_test=False, cull_face=False, blend=True,
                                           blend_func=('src_alpha', 'one_minus_src_alpha'))
 
-        IMAGE_SHAPE = layer_0_vg.shape
+        self._image_shape = layer_0_vg.shape
         self.clear_pins_text()
         self.show_pins_text(pins)
 
         self.view_top.camera = "panzoom"
-        self.view_top.camera.set_range(x=(0, IMAGE_SHAPE[1]), y=(0, IMAGE_SHAPE[0]), margin=0)
+        self.view_top.camera.set_range(x=(0, self._image_shape[1]), y=(0, self._image_shape[0]), margin=0)
+        self.view_top.camera.aspect = 1
 
     def show_single_view(self, layer, pins):
-        IMAGE_SHAPE = layer.shape
+        self._image_shape = layer.shape
         self.image.set_data(layer)
 
         self.clear_pins_text()
         self.show_pins_text(pins)
 
         self.view_top.camera = "panzoom"
-        self.view_top.camera.set_range(x=(0, IMAGE_SHAPE[1]), y=(0, IMAGE_SHAPE[0]), margin=0)
+        self.view_top.camera.set_range(x=(0, self._image_shape[1]), y=(0, self._image_shape[0]), margin=0)
+        self.view_top.camera.aspect = 1
 
     def update_image(self):
         if self._overlayed_image is not None:
@@ -143,20 +185,15 @@ class CanvasWrapper:
         # if it is Combined view get the two visual grids of our layers and pass it to show_combined view
         # Do not render if the grid is not multilayer and tries accessing other layer
         # Ideally we should lock the choices in the UI using QT but whatever this is Q&D
-        if self._active_layer == -1 and self.funcWrapper.multiLayer:
+        if self._active_layer == -1:
             visual_grid_3d = self.funcWrapper.update_grid_3d()
             pins = self.funcWrapper.pins
 
             self.show_combined_view(visual_grid_3d[0], visual_grid_3d[1], pins)
         else:
-            if self.funcWrapper.multiLayer:
-                visual_grid_3d = self.funcWrapper.update_grid_3d()
-                pins = self.funcWrapper.pins
-                self.show_single_view(visual_grid_3d[self._active_layer], pins)
-            else:
-                visual_grid = self.funcWrapper.update_grid()
-                pins = self.funcWrapper.pins
-                self.show_single_view(visual_grid, pins)
+            visual_grid_3d = self.funcWrapper.update_grid_3d()
+            pins = self.funcWrapper.pins
+            self.show_single_view(visual_grid_3d[self._active_layer], pins)
 
     def clear_pins_text(self):
         for visual in self._pin_text_visuals:
@@ -164,21 +201,21 @@ class CanvasWrapper:
         self._pin_text_visuals = []
 
     def show_pins_text(self, pins):
+        for i, via in enumerate(self.funcWrapper.vias):
+            x, y = via
+            via_text = visuals.Text(f'V{x},{y}', pos=(y+0.5, x+0.8), color='#080843',
+                                font_size=8, anchor_x='center', anchor_y='center',
+                                parent=self.view_top.scene)
+            via_text.order = 1
+            self._pin_text_visuals.append(via_text)
+
         for i, pin in enumerate(pins):
-            if len(pin) == 2:
-                r, c = pin
-                pin_text = visuals.Text(f'P{r},{c}', pos=(c+0.5, r+0.5), color='black',
-                                    font_size=8, anchor_x='center', anchor_y='center',
-                                    parent=self.view_top.scene)
-                pin_text.order = 1
-                self._pin_text_visuals.append(pin_text)
-            else:
-                l, x, y = pin
-                pin_text = visuals.Text(f'P{l},{x},{y}', pos=(y+0.5, x+0.5), color='black',
-                                    font_size=8, anchor_x='center', anchor_y='center',
-                                    parent=self.view_top.scene)
-                pin_text.order = 1
-                self._pin_text_visuals.append(pin_text)
+            l, x, y = pin
+            pin_text = visuals.Text(f'P{l},{x},{y}', pos=(y+0.5, x+0.5), color='black',
+                                font_size=8, anchor_x='center', anchor_y='center',
+                                parent=self.view_top.scene)
+            pin_text.order = 1
+            self._pin_text_visuals.append(pin_text)
 
     def set_image_colormap(self, cmap_name: str):
         print(f"Changing image colormap to {cmap_name}")
@@ -191,6 +228,7 @@ class CanvasWrapper:
         print(f"Changing test case to {testcase_no}")
         self.funcWrapper.current_testcase = Utils.testcase_name_to_int(testcase_no)
         self.update_image()
+        self.create_grid_lines(self._image_shape)
 
     def set_active_layer_and_redraw(self, layer_name: str):
         print(f"Changing active layer to {layer_name}")

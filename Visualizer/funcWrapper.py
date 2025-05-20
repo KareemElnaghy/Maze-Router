@@ -10,6 +10,7 @@ class FunctionalityWrapper:
     pins = []
     grid = []
     nets = []
+    vias = []
     previous_paths = []
     previous_pins = []
 
@@ -17,13 +18,26 @@ class FunctionalityWrapper:
     multiLayer = False
     current_layer_displayed = 0
 
+    #def get_via_locations:
+
     def update_grid_3d(self):
+        self.pins = []
+        self.vias = []
         visual_grid_3d = np.array(self.grid, np.float32)
         logical_grid_3d = np.array(self.grid, np.float32)
 
         for net in self.nets:
-            all_paths, all_vias = lee_router_multi(logical_grid_3d, net)
+            all_paths, all_vias = lee_router_multi(logical_grid_3d, net, 20, 3)
+            #print(all_vias)
+            print("PATH")
+            print(all_paths)
+
+            print("VIAS")
+            print(all_vias)
             path = np.array(all_paths, np.float32)
+            vias = np.array(all_vias, np.float32)
+
+
             # obstacles
             visual_grid_3d[visual_grid_3d == -1] = 64
 
@@ -37,6 +51,19 @@ class FunctionalityWrapper:
                 logical_grid_3d[x, y, z] = -1
                 visual_grid_3d[x, y, z] = 512
                 self.pins.append((x, y, z))
+
+            # vias
+            via_direction = 0
+            for x,y in vias.astype(int):
+                visual_grid_3d[1,x,y] = 420
+                visual_grid_3d[0,x,y] = 420
+                self.vias.append((x, y))
+
+
+
+
+            print("VISGIRD")
+            print(visual_grid_3d)
 
 
         return visual_grid_3d
@@ -106,7 +133,7 @@ class FunctionalityWrapper:
 
     def init_testcase(self):
         self.pins = []
-        
+
         match self.current_testcase:
             case 0:
                 self.grid, self.nets = input_file('Testcases/case0.txt')
@@ -170,4 +197,3 @@ class FunctionalityWrapper:
 
         # call net reordering heuristic after loading the test case
         self.net_reordering()
- 
