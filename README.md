@@ -60,11 +60,11 @@ NET (0, 0, 0), (4, 4, 1)
 
 ---
 
-### _Future Enhancements_
-1- Add support for more than two layers.
-2- Optimize Lee's algorithm for better performance on large grids.
-3- Improve error handling and input validation.
-4- Enhance the visualizer with more customization options.
+## _Future Enhancements_
+1. Add support for more than two layers.
+2. Optimize Lee's algorithm for better performance on large grids.
+3. Improve error handling and input validation.
+4. Enhance the visualizer with more customization options.
 
 ## Setting up dev environment
 
