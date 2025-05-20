@@ -17,9 +17,11 @@ def get_source_pin(pins, rows, cols):
     closest_pin = pins[0]
     min_distance = float('inf')
 
+
     for pin in pins:
         for corner in corners:
             # Manhattan distance to corner (ignoring layer)
+            distance = float('inf')
             if pin[0] == 0 and corner[0] == 0:
                 distance = abs(pin[1] - corner[1]) + abs(pin[2] - corner[2])
             elif pin[0] == 1 and corner[0] == 1:
