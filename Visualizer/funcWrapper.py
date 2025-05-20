@@ -138,18 +138,49 @@ class FunctionalityWrapper:
             case 0:
                 self.grid, self.nets = input_file('Testcases/case0.txt')
                 self.multiLayer = False
+                with open(f"output_case{self.current_testcase}.txt", "w") as f:
+                    for i, net in enumerate(self.nets):
+                        line = f"net{i+1}"  
+                        for pin in net:
+                            line += f" ({pin[0]}, {pin[1]}, {pin[2]})"
+                        f.write(line + "\n")                
             case 1:
                 self.grid, self.nets = input_file('Testcases/case1.txt')
                 self.multiLayer = False
+                with open(f"output_case{self.current_testcase}.txt", "w") as f:
+                    for i, net in enumerate(self.nets):
+                        line = f"net{i+1}"  
+                        for pin in net:
+                            line += f" ({pin[0]}, {pin[1]}, {pin[2]})"
+                        f.write(line + "\n")                
             case 2:
                 self.grid, self.nets = input_file('Testcases/case2.txt')
                 self.multiLayer = False
+                with open(f"output_case{self.current_testcase}.txt", "w") as f:
+                    for i, net in enumerate(self.nets):
+                        line = f"net{i+1}"  
+                        for pin in net:
+                            line += f" ({pin[0]}, {pin[1]}, {pin[2]})"
+                        f.write(line + "\n")               
             case 3:
                 self.grid, self.nets = input_file('Testcases/case3.txt')
                 self.multiLayer = False
+                with open(f"output_case{self.current_testcase}.txt", "w") as f:
+                    for i, net in enumerate(self.nets):
+                        line = f"net{i+1}" 
+                        for pin in net:
+                            line += f" ({pin[0]}, {pin[1]}, {pin[2]})"
+                        f.write(line + "\n")
             case 4:
                 self.grid, self.nets = input_file('Testcases/case4.txt')
                 self.multiLayer = True
+                with open(f"output_case{self.current_testcase}.txt", "w") as f:
+                    for i, net in enumerate(self.nets):
+                        line = f"net{i+1}"  
+                        for pin in net:
+                            line += f" ({pin[0]}, {pin[1]}, {pin[2]})"
+                        f.write(line + "\n")
+
 
             # 1000x1000 random Grid testcase
             case 5:
@@ -187,13 +218,25 @@ class FunctionalityWrapper:
                 else:
                     self.grid, self.nets = input_file('Testcases/case0.txt')
                     self.multiLayer = False
-                # self.grid, self.nets = input_file('Testcases/case3.txt')
-                # self.multiLayer = False
+                with open(f"output_case{self.current_testcase}.txt", "w") as f:
+                    for i, net in enumerate(self.nets):
+                        line = f"net{i+1}"  
+                        for pin in net:
+                            line += f" ({pin[0]}, {pin[1]}, {pin[2]})"
+                        f.write(line + "\n")
+
 
 
             case _:
                 self.grid, self.nets = input_file('Testcases/case4.txt')
                 self.multiLayer = True
+                with open(f"output_case{self.current_testcase}.txt", "w") as f:
+                    for i, net in enumerate(self.nets):
+                        line = f"net{i+1}"  
+                        for pin in net:
+                            line += f" ({pin[0]}, {pin[1]}, {pin[2]})"
+                        f.write(line + "\n")
+
 
         # call net reordering heuristic after loading the test case
         self.net_reordering()
