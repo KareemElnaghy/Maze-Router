@@ -1,6 +1,6 @@
 # Maze-Router
 
-## Features
+## _Features_
 - **Multi-Layer Routing**: Supports single and multi-layer grids for increased flexibility.
 - **Pathfinding Algorithms**: Implements Lee's algorithm for guaranteed shortest pathfinding.
 - **File Handling**: Parses input files to extract grid dimensions, obstacles, and net connections.
