@@ -14,7 +14,7 @@ def input_file(filename):
             y = x.strip().split('OBS')[-1]
             tup = eval(y)
 
-            obs.append(tup)
+            obs.append((tup[1], tup[0]))
 
     # Extract nets
     for z in lines[1:]:
@@ -22,15 +22,9 @@ def input_file(filename):
             z = z.strip()
             tuples = z.split(' ', 1)
             sub_net = tuples[1]
-
-
-            list_of_tuples = eval(f'[{sub_net}]')
-
-            #if not multiLayer:
-            #    for tup in list_of_tuples:
-            #        if tup[0] == 1:
-            #            multiLayer = True
-
+            # Parse as (layer, x, y) and convert to (layer, y, x)
+            raw_tuples = eval(f'[{sub_net}]')
+            list_of_tuples = [(t[0], t[2], t[1]) for t in raw_tuples]  # (layer, y, x)
             nets.append(list_of_tuples)
 
     grids = []
@@ -40,11 +34,11 @@ def input_file(filename):
         grids.append([[0] * cols for _ in range(rows)])
 
     if num_grids == 2:
-        for x, y in obs:
-            grids[0][x][y] = -1
-            grids[1][x][y] = -1
+        for y, x in obs:
+            grids[0][y][x] = -1
+            grids[1][y][x] = -1
     elif num_grids == 1:
         for x, y in obs:
-            grids[0][x][y] = -1
+            grids[0][y][x] = -1
 
     return grids, nets
