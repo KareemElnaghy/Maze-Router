@@ -222,7 +222,7 @@ class FunctionalityWrapper:
                     self.non_preferred_cost = non_preferred_cost
                     self.via_cost = via_cost
                     self.multiLayer = multi
-                    with open(f"output_case{self.current_testcase}.txt", "w") as f:
+                    with open(f"user_output_case.txt", "w") as f:
                         for i, net in enumerate(self.nets):
                             line = f"net{i+1}"  
                             for pin in net:
