@@ -8,7 +8,7 @@
 
 ---
 
-## Assumptions
+## _Assumptions_
 1. Input files are formatted correctly with grid dimensions, obstacles, and net connections.
 2. Obstacles and pins are within the bounds of the grid.
 3. Multi-layer routing assumes two layers, with alternating horizontal and vertical preferred directions.
@@ -17,7 +17,7 @@
 
 ---
 
-## Limitations
+## _Limitations_
 1. **Scalability**: Performance may degrade for very large grids or a high number of nets.
 2. **Algorithm Constraints**: Lee's algorithm is computationally expensive for large grids due to its exhaustive search nature.
 3. **Visualization**: The visualizer may encounter issues on systems with incompatible OpenGL or Wayland configurations.
@@ -26,7 +26,7 @@
 
 ---
 
-## Input File Format
+## _Input File Format_
 
 The input file should define the grid dimensions, obstacles, and nets in the following format:
 
@@ -35,10 +35,12 @@ The input file should define the grid dimensions, obstacles, and nets in the fol
 3. **Nets**: Defined as `NET (x1, y1), (x2, y2), ...` to specify the pins to be connected.
 
 ### Example Input File
-5x5 
-OBS(1, 1) 
-OBS(2, 2) 
+5x5
+OBS(1, 1)
+OBS(2, 2)
 NET (0, 0), (4, 4)
+
+
 ### Explanation
 - `5x5`: Defines a grid with 5 rows and 5 columns.
 - `OBS(1, 1)`: Places an obstacle at row 1, column 1.
@@ -55,6 +57,14 @@ NET (0, 0, 0), (4, 4, 1)
 - Obstacles and pins must be within the grid bounds.
 - Multi-layer grids assume two layers by default, with alternating horizontal and vertical preferred directions.
 - Input files must be correctly formatted to avoid parsing errors.
+
+---
+
+## _Future Enhancements_
+1. Add support for more than two layers.
+2. Optimize Lee's algorithm for better performance on large grids.
+3. Improve error handling and input validation.
+4. Enhance the visualizer with more customization options.
 
 ## Setting up dev environment
 
