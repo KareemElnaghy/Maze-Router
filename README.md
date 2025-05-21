@@ -14,6 +14,7 @@
 3. Multi-layer routing assumes two layers, with alternating horizontal and vertical preferred directions.
 4. The grid is rectangular, and dimensions are specified in the format `rows x cols`.
 5. Obstacles are static and do not change during routing.
+6. Obstacles defined through the input files apply to all layers.
 
 ---
 
