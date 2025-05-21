@@ -214,8 +214,8 @@ class FunctionalityWrapper:
             case -1:
                 if len(sys.argv) > 1:
                     user_file = sys.argv[1]
-                    non_preferred_cost = int(sys.argv[2]) if len(sys.argv) > 2 else 2
-                    via_cost = int(sys.argv[3]) if len(sys.argv) > 3 else 10
+                    non_preferred_cost = int(sys.argv[2]) if len(sys.argv) > 2 else 10
+                    via_cost = int(sys.argv[3]) if len(sys.argv) > 3 else 50
                     multi = True  # Always default to True
 
                     self.grid, self.nets = input_file(user_file)
@@ -230,8 +230,8 @@ class FunctionalityWrapper:
                             f.write(line + "\n")
                 else:
                     self.grid, self.nets = input_file('Testcases/case0.txt')
-                    self.non_preferred_cost = 2
-                    self.via_cost = 10
+                    self.non_preferred_cost = 10
+                    self.via_cost = 50
                     self.multiLayer = True
                     with open(f"output_case{self.current_testcase}.txt", "w") as f:
                         for i, net in enumerate(self.nets):
