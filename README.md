@@ -67,6 +67,19 @@ NET (0, 0, 0), (4, 4, 1)
 3. Improve error handling and input validation.
 4. Enhance the visualizer with more customization options.
 
+___
+## Running the Router
+There are 4 test cases that are that the user can chose to view on the GUI.
+Running using the defualt test cases:
+```bash
+python3 main.py
+```
+The user can choose to input any text file by stating the filename and the penalty cost of travelling along the non-preferred direction of a layer and a via.
+```bash
+python3 main.py input_file.txt non_preferred_cost via_cost
+```
+
+
 ## Setting up dev environment
 
 
@@ -154,15 +167,4 @@ Or the equivalent functionality of above commands according to your shell/enviro
 >[!WARNING]
 > Not updating your `requirements.txt` will abort the commit:
 > This is done by the pre-commit hook in `.git/hooks/pre-commit`
-
-## Running the Router
-There are 4 test cases that are that the user can chose to view on the GUI.
-Running using the defualt test cases:
-```bash
-python3 main.py
-```
-The user can choose to input any text file by stating the filename and the penalty cost of travelling along the non-preferred direction of a layer and a via.
-```bash
-python3 main.py input_file.txt non_preferred_cost via_cost
-```
 
