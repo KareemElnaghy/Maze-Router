@@ -160,12 +160,8 @@ Running using the defualt test cases:
 ```bash
 python3 main.py
 ```
-The user can chose to input any input file by stating the filename and if it is multilayered
+The user can choose to input any text file by stating the filename and the penalty cost of travelling along the non-preferred direction of a layer and a via.
 ```bash
-python3 main.py input_file.txt True
-```
-Or
-```bash
-python3 main.py input_file.txt False
+python3 main.py input_file.txt non_preferred_cost via_cost
 ```
 
